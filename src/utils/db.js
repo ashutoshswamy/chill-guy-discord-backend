@@ -184,15 +184,38 @@ async function getInventory(userId) {
     return data || [];
 }
 
-async function removeItem(userId, itemName) {
+async function removeItem(userId, itemName, quantity = 1) {
     assertDb();
-    const { error } = await supabase
+    const { data: existing, error: selectErr } = await supabase
         .from('inventory')
-        .delete()
+        .select('*')
         .eq('user_id', userId)
-        .eq('item_name', itemName);
-    if (error) throw error;
+        .eq('item_name', itemName)
+        .single();
+
+    if (selectErr) {
+        if (selectErr.code === 'PGRST116') {
+            // Row not found
+            return;
+        }
+        throw selectErr;
+    }
+
+    if (existing.quantity <= quantity) {
+        const { error: deleteErr } = await supabase
+            .from('inventory')
+            .delete()
+            .eq('id', existing.id);
+        if (deleteErr) throw deleteErr;
+    } else {
+        const { error: updateErr } = await supabase
+            .from('inventory')
+            .update({ quantity: existing.quantity - quantity })
+            .eq('id', existing.id);
+        if (updateErr) throw updateErr;
+    }
 }
+
 
 // ============================================================
 // JOBS
@@ -834,6 +857,52 @@ async function getRecentFinds(userId, limit = 5) {
     return data || [];
 }
 
+// ============================================================
+// LEADERBOARD
+// ============================================================
+
+/**
+ * Fetch the top users for a given metric.
+ * @param {'xp'|'coins'|'networth'} type
+ * @param {string[]|null} userIds  - if provided, restricts to those user IDs (server scope)
+ * @param {number} limit
+ */
+async function getLeaderboard(type, userIds = null, limit = 10) {
+    assertDb();
+
+    let query = supabase.from('users').select('user_id, xp, level, wallet, bank, total_earned');
+
+    if (userIds && userIds.length > 0) {
+        query = query.in('user_id', userIds);
+    }
+
+    if (type === 'xp') {
+        query = query.order('xp', { ascending: false });
+    } else if (type === 'coins') {
+        // wallet + bank — compute in JS after fetch
+        // fetch more rows so we can sort in memory when filtering
+        query = query.order('total_earned', { ascending: false });
+    } else if (type === 'networth') {
+        query = query.order('total_earned', { ascending: false });
+    }
+
+    query = query.limit(userIds ? Math.min(userIds.length, 100) : 100);
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    let rows = data || [];
+
+    // Sort in-memory for coins / networth since we can't do computed columns easily
+    if (type === 'coins') {
+        rows.sort((a, b) => (b.wallet + b.bank) - (a.wallet + a.bank));
+    } else if (type === 'networth') {
+        rows.sort((a, b) => (b.wallet + b.bank) - (a.wallet + a.bank)); // approximate
+    }
+
+    return rows.slice(0, limit);
+}
+
 module.exports = {
     supabase,
     getUser,
@@ -872,6 +941,8 @@ module.exports = {
     recordFind,
     getRecentFinds,
     checkAndSetCooldown,
+    resetCooldown,
+    getUserCooldowns,
     hasItem,
     getStock,
     getStocksByExchange,
@@ -881,6 +952,7 @@ module.exports = {
     getUserPortfolio,
     buyStock,
     sellStock,
+    getLeaderboard,
 };
 
 // ============================================================
@@ -910,6 +982,94 @@ async function checkAndSetCooldown(userId, action, durationMs) {
 
     return { onCooldown: false };
 }
+
+async function resetCooldown(userId, action) {
+    assertDb();
+
+    // 1. Reset all cooldown types if action is 'all'
+    if (!action || action === 'all') {
+        await supabase.from('user_cooldowns').delete().eq('user_id', userId);
+        await supabase
+            .from('users')
+            .update({
+                daily_claimed_at: null,
+                weekly_claimed_at: null,
+                monthly_claimed_at: null
+            })
+            .eq('user_id', userId);
+        await supabase
+            .from('user_jobs')
+            .update({ last_worked_at: null })
+            .eq('user_id', userId);
+
+        const { cooldowns } = require('./cooldowns');
+        for (const [cmd, userMap] of cooldowns) {
+            userMap.delete(userId);
+        }
+        return;
+    }
+
+    // 2. Specific claims: daily, weekly, monthly
+    if (['daily', 'weekly', 'monthly'].includes(action)) {
+        const field = `${action}_claimed_at`;
+        const { error } = await supabase
+            .from('users')
+            .update({ [field]: null })
+            .eq('user_id', userId);
+        if (error) throw error;
+        return;
+    }
+
+    // 3. Work cooldown
+    if (action === 'work') {
+        const { error } = await supabase
+            .from('user_jobs')
+            .update({ last_worked_at: null })
+            .eq('user_id', userId);
+        if (error) throw error;
+        return;
+    }
+
+    // 4. Activity database cooldowns
+    if (['chop', 'dig', 'fish', 'hunt', 'mine'].includes(action)) {
+        const { error } = await supabase
+            .from('user_cooldowns')
+            .delete()
+            .eq('user_id', userId)
+            .eq('action', action);
+        if (error) throw error;
+        return;
+    }
+
+    // 5. In-memory command cooldowns
+    const { cooldowns } = require('./cooldowns');
+    if (action === 'rob') {
+        if (cooldowns.has('rob')) {
+            cooldowns.get('rob').delete(userId);
+        }
+        for (const [cmdName, userMap] of cooldowns) {
+            if (cmdName.startsWith('rob_')) {
+                userMap.delete(userId);
+            }
+        }
+    } else {
+        if (cooldowns.has(action)) {
+            cooldowns.get(action).delete(userId);
+        }
+    }
+}
+
+async function getUserCooldowns(userId) {
+    assertDb();
+    const { data, error } = await supabase
+        .from('user_cooldowns')
+        .select('*')
+        .eq('user_id', userId);
+    if (error) throw error;
+    return data || [];
+}
+
+
 
 async function hasItem(userId, itemName) {
     assertDb();

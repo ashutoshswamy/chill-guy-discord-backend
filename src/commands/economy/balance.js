@@ -14,7 +14,14 @@ async function buildBalanceContainer(targetUser) {
     const profile = await db.getUser(targetUser.id);
     const rawInventory = await db.getInventory(targetUser.id);
     const inventoryValue = rawInventory.reduce((sum, inv) => sum + inv.quantity * getSellPrice(inv.item_name), 0);
-    const netWorth = profile.wallet + profile.bank + inventoryValue;
+
+    const portfolio = await db.getUserPortfolio(targetUser.id);
+    const stocksValue = portfolio.reduce((sum, holding) => {
+        const price = holding.stocks ? holding.stocks.current_price : 0;
+        return sum + (holding.shares * price);
+    }, 0);
+
+    const netWorth = profile.wallet + profile.bank + inventoryValue + stocksValue;
 
     const container = new ContainerBuilder()
         .addSectionComponents(
@@ -32,6 +39,7 @@ async function buildBalanceContainer(targetUser) {
                 `**Wallet:** ${coin} **${profile.wallet.toLocaleString()}** coins\n` +
                 `**Bank:** ${coin} **${profile.bank.toLocaleString()}** coins\n` +
                 `**Inventory Value:** ${coin} **${inventoryValue.toLocaleString()}** coins\n` +
+                `**Stock Portfolio:** ${coin} **${stocksValue.toLocaleString()}** coins\n` +
                 `**Net Worth:** ${coin} **${netWorth.toLocaleString()}** coins`
             )
         );

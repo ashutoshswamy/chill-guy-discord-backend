@@ -260,11 +260,13 @@ module.exports = {
         collector.on('end', async () => {
             try {
                 const final = buildInventoryContainer(currentCategory, currentPage, rawInventory, target, user);
-                const rows = final.components?.filter(c => c.type === 1) || [];
-                for (const row of rows) {
-                    for (const comp of row.components || []) {
-                        comp.setDisabled(true);
+                for (const c of final.components || []) {
+                    if (c.components) {
+                        for (const comp of c.components) {
+                            if (typeof comp.setDisabled === 'function') comp.setDisabled(true);
+                        }
                     }
+                    if (typeof c.setDisabled === 'function') c.setDisabled(true);
                 }
                 await interaction.editReply({
                     flags: MessageFlags.IsComponentsV2,

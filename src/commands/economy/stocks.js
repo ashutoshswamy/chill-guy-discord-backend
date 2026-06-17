@@ -2,9 +2,11 @@ const {
     SlashCommandBuilder,
     ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder,
     SeparatorBuilder, SeparatorSpacingSize, MessageFlags,
-    ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder
+    ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder,
+    AttachmentBuilder, MediaGalleryBuilder, MediaGalleryItemBuilder
 } = require('discord.js');
 const db = require('../../utils/db');
+const { generateStockChart } = require('../../utils/stockChart');
 const {
     EXCHANGES, STOCK_MAP, EXCHANGE_STOCKS,
     PRICE_STALE_MS, calcNewPrice,
@@ -129,6 +131,12 @@ function buildStocksContainer(exchange, page, dbStocks, user) {
             `-# Use \`/stocks info <ticker>\` for details · \`/stocks buy <ticker> <shares>\` to invest`
         )
     );
+    container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false));
+    container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+            `-# This is a **simulated market** for entertainment only. All prices, tickers, and companies are fictional. Do not make real financial decisions based on this data.`
+        )
+    );
 
     return container;
 }
@@ -243,11 +251,13 @@ module.exports = {
             collector.on('end', async () => {
                 try {
                     const final = buildStocksContainer(currentExchange, currentPage, dbStocks, user);
-                    const rows = final.components?.filter(c => c.type === 1) || [];
-                    for (const row of rows) {
-                        for (const comp of row.components || []) {
-                            comp.setDisabled(true);
+                    for (const c of final.components || []) {
+                        if (c.components) {
+                            for (const comp of c.components) {
+                                if (typeof comp.setDisabled === 'function') comp.setDisabled(true);
+                            }
                         }
+                        if (typeof c.setDisabled === 'function') c.setDisabled(true);
                     }
                     await interaction.editReply({
                         flags: MessageFlags.IsComponentsV2,
@@ -294,6 +304,18 @@ module.exports = {
                 holdingText = `\n\n**Your Position**\nShares: **${holding.shares.toLocaleString()}**\nAvg buy: ${coin} ${formatPrice(holding.avg_buy_price)}\nCurrent value: ${coin} ${formatPrice(stock.current_price * holding.shares)}\nP&L: ${plSign}${coin} ${formatPrice(plTotal)} (${plSign}${plPct}%)`;
             }
 
+            // Generate chart image
+            const chartBuffer = generateStockChart(
+                ticker,
+                meta.company,
+                stock.current_price,
+                stock.base_price,
+                meta.volatility,
+                stock.change_pct || 0
+            );
+            const chartFileName = `chart_${ticker.toLowerCase()}.png`;
+            const attachment = new AttachmentBuilder(chartBuffer, { name: chartFileName });
+
             const container = new ContainerBuilder()
                 .addSectionComponents(
                     new SectionBuilder()
@@ -317,13 +339,31 @@ module.exports = {
                     )
                 )
                 .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addMediaGalleryComponents(
+                    new MediaGalleryBuilder().addItems(
+                        new MediaGalleryItemBuilder()
+                            .setURL(`attachment://${chartFileName}`)
+                            .setDescription(`${ticker} price chart`)
+                    )
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
                 .addTextDisplayComponents(
                     new TextDisplayBuilder().setContent(
-                        `-# Prices update every 30 minutes · \`/stocks buy ${ticker} <shares>\` to invest`
+                        `-# Prices update every minute · \`/stocks buy ${ticker} <shares>\` to invest`
+                    )
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `-# This is a **simulated market** for entertainment only. All prices, tickers, and companies are fictional. Do not make real financial decisions based on this data.`
                     )
                 );
 
-            return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
+            return interaction.editReply({
+                flags: MessageFlags.IsComponentsV2,
+                components: [container],
+                files: [attachment]
+            });
         }
 
         // ── BUY ───────────────────────────────────────────────
@@ -376,6 +416,12 @@ module.exports = {
                         `**Total paid:** ${coin} ${formatPrice(total)}\n` +
                         `**Wallet remaining:** ${coin} ${formatPrice(updated.wallet)}\n\n` +
                         `**Total position:** ${holding.shares.toLocaleString()} shares @ avg ${coin} ${formatPrice(holding.avg_buy_price)}`
+                    )
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `-# This is a **simulated market** for entertainment only. All prices, tickers, and companies are fictional. Do not make real financial decisions based on this data.`
                     )
                 );
 
@@ -446,6 +492,12 @@ module.exports = {
                         `**Profit / Loss:** ${plSign}${coin} ${formatPrice(Math.abs(pl))}\n\n` +
                         `**Wallet:** ${coin} ${formatPrice(updated.wallet)}`
                     )
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `-# This is a **simulated market** for entertainment only. All prices, tickers, and companies are fictional. Do not make real financial decisions based on this data.`
+                    )
                 );
 
             return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
@@ -472,6 +524,11 @@ module.exports = {
                     .addTextDisplayComponents(
                         new TextDisplayBuilder().setContent(
                             `-# Start investing with \`/stocks buy <ticker> <shares>\``
+                        )
+                    )
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `-# This is a **simulated market** for entertainment only. All prices, tickers, and companies are fictional. Do not make real financial decisions based on this data.`
                         )
                     );
                 return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
@@ -519,6 +576,12 @@ module.exports = {
                         `**Total invested:** ${coin} ${formatPrice(totalInvested)}\n` +
                         `**Current value:** ${coin} ${formatPrice(totalValue)}\n` +
                         `**Overall P&L:** ${totalPlSign}${coin} ${formatPrice(Math.abs(totalPL))} (${totalPlSign}${totalPlPct}%)`
+                    )
+                )
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(false))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `-# This is a **simulated market** for entertainment only. All prices, tickers, and companies are fictional. Do not make real financial decisions based on this data.`
                     )
                 );
 

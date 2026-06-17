@@ -8,6 +8,7 @@ const { LOOTBOX_TIERS, LOOTBOX_ITEMS, openLootbox } = require('../../utils/lootb
 const { getEmoji } = require('../../utils/emojis');
 
 const coin = getEmoji('coin');
+const xp   = getEmoji('xp');
 
 const CONSUMABLE_EMOJIS = {
     'XP Potion':   '',
@@ -78,7 +79,7 @@ module.exports = {
                         rewardLines.push(`${coin} **+${r.amount.toLocaleString()} coins**`);
                     } else if (r.type === 'xp') {
                         totalXP += r.amount;
-                        rewardLines.push(`**+${r.amount} XP**`);
+                        rewardLines.push(`${xp} **+${r.amount} XP**`);
                     } else if (r.type === 'item') {
                         await db.addItem(user.id, r.name);
                         const rarityLabel = RARITY_LABELS[r.rarity] ?? r.rarity;

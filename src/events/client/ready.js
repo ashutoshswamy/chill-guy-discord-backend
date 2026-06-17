@@ -9,7 +9,7 @@ module.exports = {
 
         if (client.user) {
             client.user.setActivity({
-                name: 'chill 😎',
+                name: 'just a chill guy 😎',
                 type: 3, // ActivityType.Watching
             });
         }

@@ -26,19 +26,21 @@ const CATEGORIES = {
         label: 'Gambling',
         emoji: '',
         commands: [
-            { name: '/coinflip <heads | tails> <bet>', desc: 'Standard 50/50 flip.', details: 'Cooldown: 15s · Win: 2x bet' },
-            { name: '/slots <bet>', desc: 'Spin reels and match symbols.', details: 'Cooldown: 15s · Win up to 50x bet' },
-            { name: '/blackjack <bet>', desc: 'Play Blackjack against the dealer.', details: 'Cooldown: 15s · Win: 2x bet (2.5x blackjack)' },
-            { name: '/roulette <bet> <type>', desc: 'Bet on colors or specific numbers.', details: 'Cooldown: 15s · Win: Red/Black (2x), Green (14x), Number (36x)' },
-            { name: '/higherlower <bet>', desc: 'Guess if the next card is higher/lower.', details: 'Cooldown: 15s · Multiplier climbs up to 30x' },
-            { name: '/crash <bet>', desc: 'Cash out before the multiplier crashes.', details: 'Cooldown: 15s · Volatility: Extreme' },
-            { name: '/rps <rock | paper | scissors> <bet>', desc: 'Classic Rock-Paper-Scissors.', details: 'Cooldown: 15s · Draw refunds bet' },
-            { name: '/cockfight <bet>', desc: 'Bet on your active pet rooster.', details: 'Cooldown: 15s (Rooster recovery: 5m)' },
-            { name: '/horserace <horse> <bet>', desc: 'Bet on 1 of 5 horses.', details: 'Cooldown: 15s · Win: 2x to 8x (depends on odds)' },
-            { name: '/scratchcard <bet>', desc: 'Match 3 items on a 3x3 grid.', details: 'Cooldown: 15s · Win up to 20x' },
+            { name: '/coinflip <amount> <heads | tails>', desc: 'Standard 50/50 flip.', details: 'Cooldown: 15s · Win: 2x bet' },
+            { name: '/slots <amount>', desc: 'Spin reels and match symbols.', details: 'Cooldown: 15s · Win up to 50x bet' },
+            { name: '/blackjack <amount>', desc: 'Play Blackjack against the dealer.', details: 'Cooldown: 15s · Win: 2x bet (2.5x blackjack)' },
+            { name: '/roulette <amount> <bet>', desc: 'Bet on colors or specific numbers.', details: 'Cooldown: 15s · Win: Red/Black (2x), Green (14x), Number (36x)' },
+            { name: '/higherlower <amount>', desc: 'Guess if the next card is higher/lower.', details: 'Cooldown: 15s · Multiplier climbs up to 30x' },
+            { name: '/crash <amount>', desc: 'Cash out before the multiplier crashes.', details: 'Cooldown: 15s · Volatility: Extreme' },
+            { name: '/rps <amount>', desc: 'Classic Rock-Paper-Scissors.', details: 'Cooldown: 15s · Draw refunds bet' },
+            { name: '/cockfight <amount>', desc: 'Bet on your active pet rooster.', details: 'Cooldown: 15s (Rooster recovery: 5m)' },
+            { name: '/horserace <amount> <horse>', desc: 'Bet on 1 of 5 horses.', details: 'Cooldown: 15s · Win: 2x to 8x (depends on odds)' },
+            { name: '/scratchcard [tier]', desc: 'Match 3 items on a 3x3 grid.', details: 'Cooldown: 15s · Win up to 20x' },
             { name: '/mines <bet> [mines]', desc: 'Play Mines. Reveal safe tiles to multiply your bet.', details: 'Cooldown: 15s · Grid size: 4x4' },
-            { name: '/rob <user>', desc: 'Attempt to steal from another wallet.', details: 'Cooldown: 10m · Success: 40% (fine on failure)' },
-            { name: '/lottery [tickets]', desc: 'Buy lottery tickets (100 coins each).', details: 'Cooldown: None · Draw occurs every 24 hours' }
+            { name: '/rob <target>', desc: 'Attempt to steal from another wallet.', details: 'Cooldown: 10m · Success: 40% (fine on failure)' },
+            { name: '/lottery buy <tickets>', desc: 'Buy lottery tickets (100 coins each).', details: 'Cooldown: None · Draw occurs every 24 hours' },
+            { name: '/lottery info', desc: 'Check current lottery pot, round, and your tickets.', details: 'Cooldown: None' },
+            { name: '/lottery draw', desc: 'Draw the lottery winner.', details: 'Cooldown: Available 24h after last draw' }
         ]
     },
     jobs: {
@@ -97,7 +99,9 @@ const CATEGORIES = {
             { name: '/shop view [category]', desc: 'Browse the shop items.', details: 'Cooldown: None · Category filtering dropdown available' },
             { name: '/shop buy <item>', desc: 'Buy permanent tools or consumables.', details: 'Cooldown: None · Tools are one-time purchase' },
             { name: '/shop sell <item> [amount]', desc: 'Sell gathered loot or items.', details: 'Cooldown: None · Added to wallet balance' },
-            { name: '/inventory [user]', desc: 'View owned items, tools, and value.', details: 'Cooldown: None · Displays estimated sell value' }
+            { name: '/inventory [user]', desc: 'View owned items, tools, and value.', details: 'Cooldown: None · Displays estimated sell value' },
+            { name: '/lootbox open <tier>', desc: 'Open a lootbox from your inventory.', details: 'Cooldown: None · Rewards coins, XP, and consumable items' },
+            { name: '/lootbox tiers', desc: 'View all lootbox tiers, drop rates, and potential rewards.', details: 'Cooldown: None' }
         ]
     },
     stats: {
@@ -113,7 +117,21 @@ const CATEGORIES = {
         emoji: '',
         commands: [
             { name: '/ping', desc: 'Check bot Latency.', details: 'Cooldown: None' },
+            { name: '/cooldowns [user]', desc: 'Check active action and reward cooldowns.', details: 'Cooldown: None · Option: user (optional)' },
             { name: '/help', desc: 'Browse help commands.', details: 'Cooldown: None · Dropdown & page pagination' }
+        ]
+    },
+    admin: {
+        label: 'Administrator',
+        emoji: '',
+        commands: [
+            { name: '/admin balance-give <user> <amount>', desc: 'Give coins to a user.', details: 'Requires: Bot Developer' },
+            { name: '/admin balance-remove <user> <amount>', desc: 'Remove coins from a user.', details: 'Requires: Bot Developer' },
+            { name: '/admin balance-set <user> <amount>', desc: 'Set a user\'s balance directly.', details: 'Requires: Bot Developer' },
+            { name: '/admin item-give <user> <item> [quantity]', desc: 'Give an item to a user.', details: 'Requires: Bot Developer · Autocomplete support' },
+            { name: '/admin item-remove <user> <item> [quantity]', desc: 'Remove an item from a user.', details: 'Requires: Bot Developer · Autocomplete support' },
+            { name: '/admin xp-add <user> <amount>', desc: 'Add XP to a user.', details: 'Requires: Bot Developer' },
+            { name: '/admin cooldown-reset <user> <action>', desc: 'Reset cooldowns for a user.', details: 'Requires: Bot Developer' }
         ]
     }
 };
@@ -193,7 +211,7 @@ function buildHelpContainer(categoryKey, page, client) {
         .addSectionComponents(
             new SectionBuilder()
                 .addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent(`## ${cat.label} Commands\nShowing ${commands.length ? (currentPage - 1) * itemsPerPage + 1 : 0}–${Math.min(currentPage * itemsPerPage, commands.length)} of ${commands.length} commands`)
+                    new TextDisplayBuilder().setContent(`## ${cat.label} Commands\nShowing ${commands.length ? (currentPage - 1) * itemsPerPage + 1 : 0}-${Math.min(currentPage * itemsPerPage, commands.length)} of ${commands.length} commands`)
                 )
                 .setThumbnailAccessory(
                     new ThumbnailBuilder().setURL(client.user.displayAvatarURL({ forceStatic: true }))
@@ -296,11 +314,13 @@ module.exports = {
             collector.on('end', async () => {
                 try {
                     const final = buildHelpContainer(currentCategory, currentPage, client);
-                    const rows = final.components?.filter(c => c.type === 1) || [];
-                    for (const row of rows) {
-                        for (const comp of row.components || []) {
-                            comp.setDisabled(true);
+                    for (const c of final.components || []) {
+                        if (c.components) {
+                            for (const comp of c.components) {
+                                if (typeof comp.setDisabled === 'function') comp.setDisabled(true);
+                            }
                         }
+                        if (typeof c.setDisabled === 'function') c.setDisabled(true);
                     }
                     await interaction.editReply({
                         flags: MessageFlags.IsComponentsV2,

@@ -8,6 +8,7 @@ const db = require('../../utils/db');
 const { getEmoji } = require('../../utils/emojis');
 
 const coin = getEmoji('coin');
+const xp   = getEmoji('xp');
 
 const {
     getPet, getPetList, getRarityConfig, getEvolveStage, getNextEvolveStage,
@@ -88,7 +89,7 @@ function buildStatBlock(pet) {
 function buildXpBlock(pet) {
     if (pet.level >= MAX_LEVEL) return `**Level:** ${pet.level} MAX`;
     const needed = xpToNextLevel(pet.level);
-    return `**Level:** ${pet.level} | **XP:** ${pet.xp}/${needed} \`${statBar(pet.xp, needed)}\``;
+    return `**Level:** ${pet.level} | ${xp} **XP:** ${pet.xp}/${needed} \`${statBar(pet.xp, needed)}\``;
 }
 
 module.exports = {
@@ -290,7 +291,7 @@ module.exports = {
                     new TextDisplayBuilder().setContent(
                         `**Hunger:** \`${statBar(result.pet.hunger)}\` ${result.pet.hunger}/100\n` +
                         `**Health:** \`${statBar(result.pet.health)}\` ${result.pet.health}/100\n` +
-                        `**XP Gained:** +${result.xpGain}\n` +
+                        `${xp} **XP Gained:** +${result.xpGain}\n` +
                         (result.leveledUp ? `**Leveled up to ${result.newLevel}!**` : `**Level:** ${result.pet.level}`)
                     )
                 );
@@ -336,7 +337,7 @@ module.exports = {
                     new TextDisplayBuilder().setContent(
                         `**Happiness:** \`${statBar(result.pet.happiness)}\` ${result.pet.happiness}/100\n` +
                         `**Energy:** \`${statBar(result.pet.energy)}\` ${result.pet.energy}/100\n` +
-                        `**XP Gained:** +${result.xpGain}\n` +
+                        `${xp} **XP Gained:** +${result.xpGain}\n` +
                         (result.leveledUp ? `**Leveled up to ${result.newLevel}!**` : `**Level:** ${result.pet.level}`)
                     )
                 );
@@ -394,11 +395,13 @@ module.exports = {
                 try {
                     const finalPets = await db.getUserPets(user.id);
                     const finalContainer = buildPetListContainer(finalPets, user);
-                    const rows = finalContainer.components?.filter(c => c.type === 1) || [];
-                    for (const row of rows) {
-                        for (const comp of row.components || []) {
-                            comp.setDisabled(true);
+                    for (const c of finalContainer.components || []) {
+                        if (c.components) {
+                            for (const comp of c.components) {
+                                if (typeof comp.setDisabled === 'function') comp.setDisabled(true);
+                            }
                         }
+                        if (typeof c.setDisabled === 'function') c.setDisabled(true);
                     }
                     await interaction.editReply({
                         flags: MessageFlags.IsComponentsV2,

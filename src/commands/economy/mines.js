@@ -22,25 +22,6 @@ function getMultiplier(minesCount, safeRevealedCount) {
     return parseFloat((raw * 0.95).toFixed(2));
 }
 
-function formatGrid(grid, revealed, explodedIdx = -1) {
-    const formatCell = (idx) => {
-        if (idx === explodedIdx) return '[X_X] ';
-        if (!revealed[idx]) return '[ ? ] ';
-        return grid[idx] === 'mine' ? '[BOMB]' : '[GEM] ';
-    };
-
-    return '```\n' +
-        `┌──────┬──────┬──────┬──────┐\n` +
-        `│ ${formatCell(0)}│ ${formatCell(1)}│ ${formatCell(2)}│ ${formatCell(3)}│\n` +
-        `├──────┼──────┼──────┼──────┤\n` +
-        `│ ${formatCell(4)}│ ${formatCell(5)}│ ${formatCell(6)}│ ${formatCell(7)}│\n` +
-        `├──────┼──────┼──────┼──────┤\n` +
-        `│ ${formatCell(8)}│ ${formatCell(9)}│ ${formatCell(10)}│ ${formatCell(11)}│\n` +
-        `├──────┼──────┼──────┼──────┤\n` +
-        `│ ${formatCell(12)}│ ${formatCell(13)}│ ${formatCell(14)}│ ${formatCell(15)}│\n` +
-        `└──────┴──────┴──────┴──────┘\n` +
-        '```';
-}
 
 function generateMinesGrid(minesCount) {
     const grid = new Array(16).fill('gem');
@@ -134,12 +115,6 @@ module.exports = {
                                 new TextDisplayBuilder().setContent(`## Mines Game\n${contentText}`)
                             )
                             .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))
-                    )
-                    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
-                    .addTextDisplayComponents(
-                        new TextDisplayBuilder().setContent(
-                            formatGrid(grid, done ? new Array(16).fill(true) : revealed, explodedIdx)
-                        )
                     );
 
                 // Build grid rows
@@ -149,16 +124,17 @@ module.exports = {
                         const idx = r * 4 + c;
                         const isRevealed = revealed[idx];
                         const isMine = grid[idx] === 'mine';
+                        const shouldShow = isRevealed || done;
 
-                        let btnLabel = '?';
+                        let btnLabel = '❓';
                         let btnStyle = ButtonStyle.Primary;
 
-                        if (isRevealed) {
+                        if (shouldShow) {
                             if (isMine) {
-                                btnLabel = 'BOMB';
+                                btnLabel = idx === explodedIdx ? '💥' : '💣';
                                 btnStyle = ButtonStyle.Danger;
                             } else {
-                                btnLabel = 'GEM';
+                                btnLabel = '💎';
                                 btnStyle = ButtonStyle.Success;
                             }
                         }

@@ -17,6 +17,18 @@ const CARD_TYPES = [
 ];
 
 const SYMBOLS = ['Diamond', 'Star', 'Clover', 'Bell', 'Target', 'Money', 'Dice', 'Card', 'Tent', 'Shine'];
+const SCRATCH_EMOJIS = {
+    'Diamond': '💎',
+    'Star': '⭐',
+    'Clover': '🍀',
+    'Bell': '🔔',
+    'Target': '🎯',
+    'Money': '💵',
+    'Dice': '🎲',
+    'Card': '🃏',
+    'Tent': '⛺',
+    'Shine': '✨'
+};
 
 function generateGrid(cardType) {
     // 3x3 grid - determine win first, then build grid
@@ -59,23 +71,6 @@ function generateGrid(cardType) {
     return { grid, prize: finalPrize, winSymbol: finalPrize > 0 ? winSymbol : null, isJackpot };
 }
 
-function formatGrid(grid, revealed) {
-    const formatCell = (idx) => {
-        if (!revealed[idx]) return '[  ?  ]';
-        const val = grid[idx];
-        return val.padStart(Math.floor((7 + val.length) / 2)).padEnd(7);
-    };
-
-    return '```\n' +
-        `┌─────────┬─────────┬─────────┐\n` +
-        `│ ${formatCell(0)} │ ${formatCell(1)} │ ${formatCell(2)} │\n` +
-        `├─────────┼─────────┼─────────┤\n` +
-        `│ ${formatCell(3)} │ ${formatCell(4)} │ ${formatCell(5)} │\n` +
-        `├─────────┼─────────┼─────────┤\n` +
-        `│ ${formatCell(6)} │ ${formatCell(7)} │ ${formatCell(8)} │\n` +
-        `└─────────┴─────────┴─────────┘\n` +
-        '```';
-}
 
 function getRevealedStats(grid, revealed) {
     const counts = {};
@@ -86,7 +81,7 @@ function getRevealedStats(grid, revealed) {
         }
     }
     const lines = Object.entries(counts)
-        .map(([sym, count]) => `**${sym}**: x${count}`)
+        .map(([sym, count]) => `**${SCRATCH_EMOJIS[sym]} ${sym}**: x${count}`)
         .join(' | ');
     return lines ? lines : 'None yet';
 }
@@ -180,7 +175,6 @@ module.exports = {
                     .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
                     .addTextDisplayComponents(
                         new TextDisplayBuilder().setContent(
-                            `${formatGrid(grid, done ? new Array(9).fill(true) : revealed)}\n\n` +
                             `**Matches:** ${getRevealedStats(grid, done ? new Array(9).fill(true) : revealed)}\n` +
                             `**Card Cost:** ${coin} ${cardType.cost.toLocaleString()} coins\n` +
                             `**Multiplier:** ${bonusRevealed || done ? `x${multiplier}` : '?'}\n` +
@@ -189,58 +183,59 @@ module.exports = {
                         )
                     );
 
+                // Row 1 (tiles 0-2)
+                container.addActionRowComponents(
+                    new ActionRowBuilder().addComponents(
+                        ...[0,1,2].map(i =>
+                            new ButtonBuilder()
+                                .setCustomId(`sc_tile_${i}`)
+                                .setLabel(revealed[i] || done ? SCRATCH_EMOJIS[grid[i]] : '❓')
+                                .setStyle(revealed[i] || done ? ButtonStyle.Secondary : ButtonStyle.Primary)
+                                .setDisabled(revealed[i] || done)
+                        )
+                    )
+                );
+                // Row 2 (tiles 3-5)
+                container.addActionRowComponents(
+                    new ActionRowBuilder().addComponents(
+                        ...[3,4,5].map(i =>
+                            new ButtonBuilder()
+                                .setCustomId(`sc_tile_${i}`)
+                                .setLabel(revealed[i] || done ? SCRATCH_EMOJIS[grid[i]] : '❓')
+                                .setStyle(revealed[i] || done ? ButtonStyle.Secondary : ButtonStyle.Primary)
+                                .setDisabled(revealed[i] || done)
+                        )
+                    )
+                );
+                // Row 3 (tiles 6-8)
+                container.addActionRowComponents(
+                    new ActionRowBuilder().addComponents(
+                        ...[6,7,8].map(i =>
+                            new ButtonBuilder()
+                                .setCustomId(`sc_tile_${i}`)
+                                .setLabel(revealed[i] || done ? SCRATCH_EMOJIS[grid[i]] : '❓')
+                                .setStyle(revealed[i] || done ? ButtonStyle.Secondary : ButtonStyle.Primary)
+                                .setDisabled(revealed[i] || done)
+                        )
+                    )
+                );
+                // Row 4: Multiplier and Reveal All
+                const row4 = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('sc_bonus')
+                        .setLabel(bonusRevealed || done ? `Multiplier: x${multiplier}` : 'Reveal Multiplier')
+                        .setStyle(bonusRevealed || done ? ButtonStyle.Success : ButtonStyle.Primary)
+                        .setDisabled(bonusRevealed || done)
+                );
                 if (!done) {
-                    // Row 1 (tiles 0-2)
-                    container.addActionRowComponents(
-                        new ActionRowBuilder().addComponents(
-                            ...[0,1,2].map(i =>
-                                new ButtonBuilder()
-                                    .setCustomId(`sc_tile_${i}`)
-                                    .setLabel(revealed[i] ? grid[i] : '?')
-                                    .setStyle(revealed[i] ? ButtonStyle.Secondary : ButtonStyle.Primary)
-                                    .setDisabled(revealed[i])
-                            )
-                        )
-                    );
-                    // Row 2 (tiles 3-5)
-                    container.addActionRowComponents(
-                        new ActionRowBuilder().addComponents(
-                            ...[3,4,5].map(i =>
-                                new ButtonBuilder()
-                                    .setCustomId(`sc_tile_${i}`)
-                                    .setLabel(revealed[i] ? grid[i] : '?')
-                                    .setStyle(revealed[i] ? ButtonStyle.Secondary : ButtonStyle.Primary)
-                                    .setDisabled(revealed[i])
-                            )
-                        )
-                    );
-                    // Row 3 (tiles 6-8)
-                    container.addActionRowComponents(
-                        new ActionRowBuilder().addComponents(
-                            ...[6,7,8].map(i =>
-                                new ButtonBuilder()
-                                    .setCustomId(`sc_tile_${i}`)
-                                    .setLabel(revealed[i] ? grid[i] : '?')
-                                    .setStyle(revealed[i] ? ButtonStyle.Secondary : ButtonStyle.Primary)
-                                    .setDisabled(revealed[i])
-                            )
-                        )
-                    );
-                    // Row 4: Multiplier and Reveal All
-                    container.addActionRowComponents(
-                        new ActionRowBuilder().addComponents(
-                            new ButtonBuilder()
-                                .setCustomId('sc_bonus')
-                                .setLabel(bonusRevealed ? `Multiplier: x${multiplier}` : 'Reveal Multiplier')
-                                .setStyle(bonusRevealed ? ButtonStyle.Success : ButtonStyle.Primary)
-                                .setDisabled(bonusRevealed),
-                            new ButtonBuilder()
-                                .setCustomId('sc_reveal_all')
-                                .setLabel('Reveal All')
-                                .setStyle(ButtonStyle.Danger)
-                        )
+                    row4.addComponents(
+                        new ButtonBuilder()
+                            .setCustomId('sc_reveal_all')
+                            .setLabel('Reveal All')
+                            .setStyle(ButtonStyle.Danger)
                     );
                 }
+                container.addActionRowComponents(row4);
 
                 return container;
             };

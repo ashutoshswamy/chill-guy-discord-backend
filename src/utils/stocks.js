@@ -391,7 +391,7 @@ for (const s of STOCKS) {
 }
 
 // ── Price helpers ─────────────────────────────────────────────
-const PRICE_STALE_MS = 30 * 60 * 1000; // 30 minutes
+const PRICE_STALE_MS = 1 * 60 * 1000; // 1 minute
 
 function calcNewPrice(currentPrice, basePrice, volatility) {
     const change  = (Math.random() * 2 - 1) * volatility;

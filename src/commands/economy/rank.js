@@ -5,6 +5,9 @@ const {
 } = require('discord.js');
 const db = require('../../utils/db');
 const { getLevelFromXP, getXPProgress, getRankTier, xpBar, getJobPayMultiplier } = require('../../utils/xp');
+const { getEmoji } = require('../../utils/emojis');
+
+const xp = getEmoji('xp');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -34,7 +37,7 @@ module.exports = {
             const bar = xpBar(pct, 14);
             const nextInfo = level >= 9999
                 ? 'MAX LEVEL'
-                : `${progress.current.toLocaleString()} / ${progress.needed.toLocaleString()} XP`;
+                : `${progress.current.toLocaleString()} / ${progress.needed.toLocaleString()} ${xp}`;
 
             const container = new ContainerBuilder()
                 .addSectionComponents(
@@ -49,10 +52,10 @@ module.exports = {
                 .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
                 .addTextDisplayComponents(
                     new TextDisplayBuilder().setContent(
-                        `**XP Progress to Level ${level + 1}**\n` +
+                        `${xp} **XP Progress to Level ${level + 1}**\n` +
                         `\`[${bar}]\` ${Math.round(pct * 100)}%\n` +
                         `${nextInfo}\n\n` +
-                        `**Total XP:** ${totalXP.toLocaleString()}\n` +
+                        `${xp} **Total XP:** ${totalXP.toLocaleString()}\n` +
                         `**Job Pay Bonus:** +${((jobMult - 1) * 100).toFixed(0)}% from level`
                     )
                 );

@@ -40,6 +40,7 @@ module.exports = {
             }
 
             db.addXP(user.id, XP_REWARDS.daily).catch(() => null);
+            await db.updateDailyStreak(user.id).catch(() => null);
 
             const container = new ContainerBuilder()
                 .addSectionComponents(

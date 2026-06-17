@@ -47,6 +47,7 @@ module.exports = {
             const result = Math.random() < 0.5 ? 'heads' : 'tails';
             const won = result === choice;
             await db.updateWallet(user.id, won ? amount : -amount);
+            db.updateQuestProgress(user.id, 'gamble').catch(() => null);
             if (won) db.addXP(user.id, XP_REWARDS.gamblingWin).catch(() => null);
             const updated = await db.getUser(user.id);
 

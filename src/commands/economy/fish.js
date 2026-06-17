@@ -59,6 +59,7 @@ module.exports = {
             if (!isJunk) {
                 await db.addItem(user.id, catch_.name, 1);
             }
+            await db.updateQuestProgress(user.id, 'fish').catch(() => null);
 
             const boxDrop = isJunk ? null : tryDropLootbox();
             if (boxDrop) await db.addItem(user.id, boxDrop);

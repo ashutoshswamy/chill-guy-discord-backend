@@ -12,6 +12,7 @@ A feature-rich Discord bot with an advanced economy, job system, virtual pets, s
 | ------- | --------------------- | ------------------------------------------- |
 | `/ping` | Check bot Latency.    | Cooldown: None                              |
 | `/help` | Browse help commands. | Cooldown: None · Dropdown & page pagination |
+| `/cooldowns [user]` | Check active action & reward cooldowns. | Cooldown: None |
 
 ---
 
@@ -25,6 +26,7 @@ A feature-rich Discord bot with an advanced economy, job system, virtual pets, s
 | `/deposit <amount \| all>`  | Deposit coins into bank safety.        | Cooldown: None · Protects coins from robberies |
 | `/withdraw <amount \| all>` | Withdraw coins to wallet for spending. | Cooldown: None                                 |
 | `/pay <user> <amount>`      | Send wallet coins to another user.     | Cooldown: None · Action is irreversible        |
+| `/gift <coins \| item> <user>` | Gift coins or items to another user. | Cooldown: None · Irreversible               |
 
 **Daily Allowances**
 
@@ -58,7 +60,13 @@ A feature-rich Discord bot with an advanced economy, job system, virtual pets, s
 | `/horserace <amount> <horse>`         | Bet on 1 of 5 horses.                               | Cooldown: 15s · Win: 2x to 8x (depends on odds)                |
 | `/scratchcard [tier]`                 | Match 3 items on a 3x3 grid.                        | Cooldown: 15s · Win up to 20x                                  |
 | `/mines <bet> [mines]`                | Play Mines. Reveal safe tiles to multiply your bet. | Cooldown: 15s · Grid size: 4x4                                 |
+| `/plinko <amount>`                    | Drop a ball down Plinko board for multipliers.       | Cooldown: 15s · Multipliers: 0.5x to 4.0x                      |
+| `/dice <amount> <bet>`                | Bet on a pair of dice sum or odd/even.              | Cooldown: 15s · Payout depends on target odds                  |
+| `/hack`                               | Hack a mainframe by matching key sequence.          | Cooldown: 30s · Requires speed & accuracy                      |
+| `/scramble`                           | Unscramble a word within 30 seconds.                | Cooldown: 30s · Earn: 150-250 coins                            |
+| `/crime`                              | Commit a crime (shoplift, atm, gta, heist).         | Cooldown: 45s · Heavy fines on fail                            |
 | `/rob <target>`                       | Attempt to steal from another wallet.               | Cooldown: 10m · Success: 40% (fine on failure)                 |
+| `/bankrob <target>`                   | Attempt to rob another user's bank.                | Cooldown: 1h · Success: 15% (fine on failure)                  |
 | `/lottery buy <tickets>`              | Buy lottery tickets (100 coins each).               | Cooldown: None · Draw occurs every 24 hours                    |
 | `/lottery info`                       | Check current lottery pot, round, and your tickets. | Cooldown: None                                                 |
 | `/lottery draw`                       | Draw the lottery winner.                            | Cooldown: Available 24h after last draw                        |
@@ -129,6 +137,8 @@ Supported Stock Exchanges: **NYSE, NASDAQ, LSE, TSE, HKEX, NSE, CRYPTO** (350 to
 | `/shop view [category]`      | Browse the shop items.                                     | Cooldown: None · Category filtering dropdown available   |
 | `/shop buy <item>`           | Buy permanent tools or consumables.                        | Cooldown: None · Tools are one-time purchase             |
 | `/shop sell <item> [amount]` | Sell gathered loot or items.                               | Cooldown: None · Added to wallet balance                 |
+| `/craft`                     | Turn raw materials into upgraded items & tools.            | Cooldown: None · Multiple recipes available              |
+| `/trade <user>`              | Trade coins and items with another player.                 | Cooldown: None · Requires accept state from both         |
 | `/inventory [user]`          | View owned items, tools, and value.                        | Cooldown: None · Displays estimated sell value           |
 | `/lootbox open <tier>`       | Open a lootbox from your inventory.                        | Cooldown: None · Rewards coins, XP, and consumable items |
 | `/lootbox tiers`             | View all lootbox tiers, drop rates, and potential rewards. | Cooldown: None                                           |
@@ -139,6 +149,11 @@ Supported Stock Exchanges: **NYSE, NASDAQ, LSE, TSE, HKEX, NSE, CRYPTO** (350 to
 
 | Command        | Description                             | Details                                 |
 | -------------- | --------------------------------------- | --------------------------------------- |
+| `/profile [user]` | View comprehensive statistics and wallet/bank/rank summary. | Cooldown: None                        |
 | `/rank [user]` | Check level, total XP, and progression. | Cooldown: None · View level pay bonuses |
+| `/achievements [user]` | Check completed and locked career achievements. | Cooldown: None                        |
+| `/streak [user]` | Check daily claim and job work shift streaks. | Cooldown: None                        |
+| `/quest`       | View daily quests and rewards progress.  | Cooldown: None · Resets every 24 hours  |
+| `/leaderboard [type] [scope]` | View global or server ranking leaderboards. | Cooldown: None · Filter options      |
 
 ---

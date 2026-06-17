@@ -18,16 +18,16 @@ const CARD_TYPES = [
 
 const SYMBOLS = ['Diamond', 'Star', 'Clover', 'Bell', 'Target', 'Money', 'Dice', 'Card', 'Tent', 'Shine'];
 const SCRATCH_EMOJIS = {
-    'Diamond': '💎',
-    'Star': '⭐',
-    'Clover': '🍀',
-    'Bell': '🔔',
-    'Target': '🎯',
-    'Money': '💵',
-    'Dice': '🎲',
-    'Card': '🃏',
-    'Tent': '⛺',
-    'Shine': '✨'
+    'Diamond': 'Diamond',
+    'Star': 'Star',
+    'Clover': 'Clover',
+    'Bell': 'Bell',
+    'Target': 'Target',
+    'Money': 'Money',
+    'Dice': 'Dice',
+    'Card': 'Card',
+    'Tent': 'Tent',
+    'Shine': 'Shine'
 };
 
 function generateGrid(cardType) {
@@ -189,7 +189,7 @@ module.exports = {
                         ...[0,1,2].map(i =>
                             new ButtonBuilder()
                                 .setCustomId(`sc_tile_${i}`)
-                                .setLabel(revealed[i] || done ? SCRATCH_EMOJIS[grid[i]] : '❓')
+                                .setLabel(revealed[i] || done ? SCRATCH_EMOJIS[grid[i]] : '?')
                                 .setStyle(revealed[i] || done ? ButtonStyle.Secondary : ButtonStyle.Primary)
                                 .setDisabled(revealed[i] || done)
                         )
@@ -201,7 +201,7 @@ module.exports = {
                         ...[3,4,5].map(i =>
                             new ButtonBuilder()
                                 .setCustomId(`sc_tile_${i}`)
-                                .setLabel(revealed[i] || done ? SCRATCH_EMOJIS[grid[i]] : '❓')
+                                .setLabel(revealed[i] || done ? SCRATCH_EMOJIS[grid[i]] : '?')
                                 .setStyle(revealed[i] || done ? ButtonStyle.Secondary : ButtonStyle.Primary)
                                 .setDisabled(revealed[i] || done)
                         )
@@ -213,7 +213,7 @@ module.exports = {
                         ...[6,7,8].map(i =>
                             new ButtonBuilder()
                                 .setCustomId(`sc_tile_${i}`)
-                                .setLabel(revealed[i] || done ? SCRATCH_EMOJIS[grid[i]] : '❓')
+                                .setLabel(revealed[i] || done ? SCRATCH_EMOJIS[grid[i]] : '?')
                                 .setStyle(revealed[i] || done ? ButtonStyle.Secondary : ButtonStyle.Primary)
                                 .setDisabled(revealed[i] || done)
                         )

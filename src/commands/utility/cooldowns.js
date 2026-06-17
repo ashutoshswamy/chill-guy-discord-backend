@@ -71,6 +71,9 @@ async function buildCooldownsContainer(targetUser) {
         { name: 'Scratchcard', key: 'scratchcard' },
         { name: 'Search', key: 'search' },
         { name: 'Mines', key: 'mines' },
+        { name: 'Scramble', key: 'scramble' },
+        { name: 'Crime', key: 'crime' },
+        { name: 'Bankrob', key: 'bankrob' },
         { name: 'Higher Lower', key: 'higherlower' },
         { name: 'Horse Race', key: 'horserace' }
     ];

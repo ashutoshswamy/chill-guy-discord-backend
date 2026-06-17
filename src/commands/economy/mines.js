@@ -126,15 +126,15 @@ module.exports = {
                         const isMine = grid[idx] === 'mine';
                         const shouldShow = isRevealed || done;
 
-                        let btnLabel = '❓';
+                        let btnLabel = '?';
                         let btnStyle = ButtonStyle.Primary;
 
                         if (shouldShow) {
                             if (isMine) {
-                                btnLabel = idx === explodedIdx ? '💥' : '💣';
+                                btnLabel = idx === explodedIdx ? '*' : 'M';
                                 btnStyle = ButtonStyle.Danger;
                             } else {
-                                btnLabel = '💎';
+                                btnLabel = 'o';
                                 btnStyle = ButtonStyle.Success;
                             }
                         }

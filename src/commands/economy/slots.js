@@ -13,13 +13,13 @@ const coin = getEmoji('coin');
 
 const REELS = ['Cherry', 'Lemon', 'Orange', 'Bell', 'Star', 'Diamond', 'Seven'];
 const SLOT_EMOJIS = {
-    'Cherry': '🍒',
-    'Lemon': '🍋',
-    'Orange': '🍊',
-    'Bell': '🔔',
-    'Star': '⭐',
-    'Diamond': '💎',
-    'Seven': '7️⃣'
+    'Cherry': 'Cherry',
+    'Lemon': 'Lemon',
+    'Orange': 'Orange',
+    'Bell': 'Bell',
+    'Star': 'Star',
+    'Diamond': 'Diamond',
+    'Seven': 'Seven'
 };
 const WEIGHTS = [30, 25, 20, 12, 7, 4, 2]; // out of 100
 

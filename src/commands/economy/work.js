@@ -101,6 +101,7 @@ module.exports = {
 
             // Write to DB
             await db.recordWork(user.id, totalPayout, promoted, newRank, newStreak, perfDelta, finalRankWorkCount);
+            await db.updateQuestProgress(user.id, 'work').catch(() => null);
             if (totalPayout > 0) await db.updateWallet(user.id, totalPayout);
 
             // Award XP

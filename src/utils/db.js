@@ -953,6 +953,10 @@ module.exports = {
     buyStock,
     sellStock,
     getLeaderboard,
+    getUserStreak,
+    updateDailyStreak,
+    getActiveQuests,
+    updateQuestProgress,
 };
 
 // ============================================================
@@ -1221,4 +1225,125 @@ async function sellStock(userId, ticker, shares, pricePerShare) {
 
     return { total, profitLoss: (pricePerShare - holding.avg_buy_price) * shares };
 }
+
+// ============================================================
+// STREAKS & QUESTS
+// ============================================================
+
+async function getUserStreak(userId) {
+    assertDb();
+    await getUser(userId);
+    const { data, error } = await supabase
+        .from('user_streaks')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+    if (error && error.code === 'PGRST116') {
+        const { data: newStreak, error: insertErr } = await supabase
+            .from('user_streaks')
+            .insert({ user_id: userId })
+            .select()
+            .single();
+        if (insertErr) throw insertErr;
+        return newStreak;
+    }
+    if (error) throw error;
+    return data;
+}
+
+async function updateDailyStreak(userId) {
+    assertDb();
+    const streak = await getUserStreak(userId);
+    const now = new Date();
+    const lastClaim = streak.last_daily_at ? new Date(streak.last_daily_at) : null;
+    
+    let newStreak = streak.daily_streak;
+    if (!lastClaim) {
+        newStreak = 1;
+    } else {
+        const diffMs = now.getTime() - lastClaim.getTime();
+        const diffHours = diffMs / (1000 * 60 * 60);
+        if (diffHours >= 24 && diffHours < 48) {
+            newStreak += 1;
+        } else if (diffHours >= 48) {
+            newStreak = 1;
+        }
+    }
+
+    const highest = Math.max(streak.highest_streak, newStreak);
+
+    const { data, error } = await supabase
+        .from('user_streaks')
+        .update({
+            daily_streak: newStreak,
+            highest_streak: highest,
+            last_daily_at: now.toISOString(),
+            updated_at: now.toISOString()
+        })
+        .eq('user_id', userId)
+        .select()
+        .single();
+    if (error) throw error;
+    return data;
+}
+
+async function getActiveQuests(userId) {
+    assertDb();
+    await getUser(userId);
+    const { generateQuestsForUser } = require('./quests');
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+        .from('user_quests')
+        .select('*')
+        .eq('user_id', userId)
+        .gt('expires_at', now);
+    
+    if (error) throw error;
+    if (data && data.length > 0) return data;
+
+    const newQuests = generateQuestsForUser().map(q => ({ ...q, user_id: userId }));
+    const { data: inserted, error: insertErr } = await supabase
+        .from('user_quests')
+        .insert(newQuests)
+        .select();
+    
+    if (insertErr) throw insertErr;
+    return inserted;
+}
+
+async function updateQuestProgress(userId, questType, amount = 1) {
+    try {
+        assertDb();
+        const now = new Date().toISOString();
+        const { data: quests, error } = await supabase
+            .from('user_quests')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('quest_type', questType)
+            .eq('completed', false)
+            .gt('expires_at', now);
+        
+        if (error || !quests || quests.length === 0) return;
+
+        for (const q of quests) {
+            const newProgress = Math.min(q.target, q.progress + amount);
+            const completed = newProgress >= q.target;
+            
+            await supabase
+                .from('user_quests')
+                .update({ progress: newProgress, completed })
+                .eq('user_id', userId)
+                .eq('quest_id', q.quest_id);
+
+            if (completed) {
+                // Award rewards!
+                await updateWallet(userId, q.reward_coins);
+                await addXP(userId, q.reward_xp).catch(() => null);
+            }
+        }
+    } catch (err) {
+        console.error('[QUEST PROGRESS ERROR]', err);
+    }
+}
+
 

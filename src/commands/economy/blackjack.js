@@ -106,6 +106,7 @@ module.exports = {
             if (handTotal(playerHand) === 21) {
                 const payout = Math.floor(amount * 1.5);
                 await db.updateWallet(user.id, payout);
+                db.updateQuestProgress(user.id, 'gamble').catch(() => null);
                 const updated = await db.getUser(user.id);
                 const container = buildEmbed(playerHand, dealerHand, false, user, amount, 'blackjack');
                 container.addTextDisplayComponents(
@@ -141,6 +142,7 @@ module.exports = {
                 // push: net = 0
 
                 await db.updateWallet(user.id, net);
+                db.updateQuestProgress(user.id, 'gamble').catch(() => null);
                 if (net > 0) db.addXP(user.id, XP_REWARDS.gamblingWin).catch(() => null);
                 const updated = await db.getUser(user.id);
 

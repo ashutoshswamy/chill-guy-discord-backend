@@ -1,5 +1,9 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
+const http = require('http');
+
+const PORT = process.env.PORT || 3000;
+http.createServer((req, res) => res.end('OK')).listen(PORT);
 
 const client = new Client({
     intents: [

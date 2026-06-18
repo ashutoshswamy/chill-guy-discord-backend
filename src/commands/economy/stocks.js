@@ -199,8 +199,8 @@ module.exports = {
         const sub    = interaction.options.getSubcommand();
         const { user } = interaction;
 
-        // Refresh stale prices on every stocks interaction
-        await refreshPrices().catch(() => null);
+        // ponytail: fire-and-forget — user sees current prices instantly, refresh lands before next interaction
+        refreshPrices().catch(() => null);
 
         // ── VIEW ──────────────────────────────────────────────
         if (sub === 'view') {

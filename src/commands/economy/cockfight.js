@@ -4,7 +4,6 @@ const {
     SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
@@ -109,6 +108,7 @@ function buildContainer(user, playerRooster, enemyRooster, pHP, eHP, roundText, 
 }
 
 module.exports = {
+    cooldown: 8,
     data: new SlashCommandBuilder()
         .setName('cockfight')
         .setDescription('Pit your rooster against a rival. Win to double your bet.')
@@ -121,11 +121,6 @@ module.exports = {
     async execute(interaction) {
         const { user } = interaction;
         const amount = interaction.options.getInteger('amount');
-
-        const cd = checkCooldown('cockfight', user.id, 20);
-        if (cd.onCooldown) {
-            return interaction.editReply({ content: `Rooster still recovering. Wait **${cd.remaining}s**.`, ephemeral: true });
-        }
 
         try {
             const profile = await db.getUser(user.id);

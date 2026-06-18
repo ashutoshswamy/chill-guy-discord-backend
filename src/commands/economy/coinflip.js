@@ -4,13 +4,13 @@ const {
     SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
 const coin = getEmoji('coin');
 
 module.exports = {
+    cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('coinflip')
         .setDescription('Bet on heads or tails. 50/50 odds, 2x payout.')
@@ -32,11 +32,6 @@ module.exports = {
         const { user } = interaction;
         const amount = interaction.options.getInteger('amount');
         const choice = interaction.options.getString('choice');
-
-        const cd = checkCooldown('coinflip', user.id, 10);
-        if (cd.onCooldown) {
-            return interaction.editReply({ content: `Chill. Wait **${cd.remaining}s** before flipping again.`, ephemeral: true });
-        }
 
         try {
             const profile = await db.getUser(user.id);

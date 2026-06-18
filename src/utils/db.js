@@ -1116,17 +1116,15 @@ async function getStocksByExchange(exchange) {
 
 async function updateStockPrices(updates) {
     assertDb();
-    for (const u of updates) {
-        await supabase
-            .from('stocks')
-            .update({
-                previous_price: u.previous_price,
-                current_price:  u.current_price,
-                change_pct:     u.change_pct,
-                last_updated:   new Date().toISOString(),
-            })
-            .eq('ticker', u.ticker);
-    }
+    const now = new Date().toISOString();
+    await Promise.all(updates.map(u =>
+        supabase.from('stocks').update({
+            previous_price: u.previous_price,
+            current_price:  u.current_price,
+            change_pct:     u.change_pct,
+            last_updated:   now,
+        }).eq('ticker', u.ticker)
+    ));
 }
 
 async function getStaleTickers(cutoffMs) {

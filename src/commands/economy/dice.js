@@ -5,7 +5,6 @@ const {
     ActionRowBuilder, ButtonBuilder, ButtonStyle
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
@@ -103,6 +102,7 @@ function buildDiceContainer(user, betAmount, d1, d2, betType, result, wallet, is
 }
 
 module.exports = {
+    cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('dice')
         .setDescription('Roll a pair of dice. Bet on Under/Over 7, Even/Odd, Exactly 7, or Doubles.')
@@ -136,17 +136,6 @@ module.exports = {
         };
 
         const playDice = async (activeInteraction, isButton, buttonInteraction) => {
-            const cd = checkCooldown('dice', user.id, 10);
-            if (cd.onCooldown) {
-                const msg = { content: `Dice are hot. Wait **${cd.remaining}s** before rolling again.`, ephemeral: true };
-                if (isButton) {
-                    await buttonInteraction.reply(msg);
-                } else {
-                    await activeInteraction.editReply(msg);
-                }
-                return null;
-            }
-
             const profile = await db.getUser(user.id);
             if (profile.wallet < amount) {
                 const msg = { content: `Not enough coins. You have ${coin} **${profile.wallet.toLocaleString()}** in wallet.`, ephemeral: true };

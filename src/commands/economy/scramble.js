@@ -5,13 +5,10 @@ const {
     ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
 const coin = getEmoji('coin');
-
-const COOLDOWN_SECONDS = 30;
 
 const WORD_LIST = [
     'CHILL', 'COIN', 'WALLET', 'BANK', 'MONEY', 'GAMBLE', 'STOCK', 'PORTFOLIO',
@@ -96,6 +93,7 @@ function buildContainer(user, scrambled, word, status = 'live', reward = 0, wall
 const activeGames = new Map();
 
 module.exports = {
+    cooldown: 30,
     data: new SlashCommandBuilder()
         .setName('scramble')
         .setDescription('Scramble a word and guess the correct word to earn coins.'),
@@ -105,14 +103,6 @@ module.exports = {
 
         if (activeGames.has(user.id)) {
             return interaction.editReply({ content: 'You already have a Scramble game running! Finish it first.', ephemeral: true });
-        }
-
-        const cd = checkCooldown('scramble', user.id, COOLDOWN_SECONDS);
-        if (cd.onCooldown) {
-            return interaction.editReply({
-                content: `Wait **${cd.remaining}s** before playing scramble again.`,
-                ephemeral: true
-            });
         }
 
         const word = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];

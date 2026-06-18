@@ -5,7 +5,6 @@ const {
     ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { getEmoji } = require('../../utils/emojis');
 
 const coin = getEmoji('coin');
@@ -39,6 +38,7 @@ function generateMinesGrid(minesCount) {
 const sessions = new Map();
 
 module.exports = {
+    cooldown: 15,
     data: new SlashCommandBuilder()
         .setName('mines')
         .setDescription('Play Mines. Reveal safe tiles to multiply your bet, cash out before hitting a mine.')
@@ -58,11 +58,6 @@ module.exports = {
         const { user } = interaction;
         const bet = interaction.options.getInteger('bet');
         const minesCount = interaction.options.getInteger('mines') || 3;
-
-        const cd = checkCooldown('mines', user.id, 15);
-        if (cd.onCooldown) {
-            return interaction.editReply({ content: `Slow down! Wait **${cd.remaining}s** before starting another game of Mines.`, ephemeral: true });
-        }
 
         try {
             const profile = await db.getUser(user.id);

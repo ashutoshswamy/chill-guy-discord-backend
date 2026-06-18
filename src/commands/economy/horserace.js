@@ -4,7 +4,6 @@ const {
     SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
@@ -51,6 +50,7 @@ function renderTrack(positions) {
 }
 
 module.exports = {
+    cooldown: 10,
     data: new SlashCommandBuilder()
         .setName('horserace')
         .setDescription('Bet on a horse race. Higher odds = bigger payout, lower win chance.')
@@ -73,11 +73,6 @@ module.exports = {
         const horseName = interaction.options.getString('horse');
         const horseIdx = HORSES.findIndex(h => h.name === horseName);
         const horse = HORSES[horseIdx];
-
-        const cd = checkCooldown('horserace', user.id, 30);
-        if (cd.onCooldown) {
-            return interaction.editReply({ content: `Races on cooldown. Wait **${cd.remaining}s**.`, ephemeral: true });
-        }
 
         try {
             const profile = await db.getUser(user.id);

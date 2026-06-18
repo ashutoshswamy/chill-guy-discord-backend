@@ -1,4 +1,12 @@
 const { Events } = require('discord.js');
+const { checkCooldown } = require('../../utils/cooldowns');
+
+function formatCooldown(seconds) {
+    const s = parseFloat(seconds);
+    if (s >= 3600) return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
+    if (s >= 60)   return `${Math.floor(s / 60)}m ${Math.floor(s % 60)}s`;
+    return `${s.toFixed(1)}s`;
+}
 
 module.exports = {
     name: Events.InteractionCreate,
@@ -27,6 +35,17 @@ module.exports = {
 
         if (!interaction.guild) {
             return interaction.reply({ content: 'This command can only be used inside a server.', ephemeral: true });
+        }
+
+        // Central cooldown check — commands declare `cooldown: <seconds>`
+        if (command.cooldown) {
+            const cd = checkCooldown(interaction.commandName, interaction.user.id, command.cooldown);
+            if (cd.onCooldown) {
+                return interaction.reply({
+                    content: `You're on cooldown! Try again in **${formatCooldown(cd.remaining)}**.`,
+                    ephemeral: true,
+                });
+            }
         }
 
         if (!command.noDefer) {

@@ -5,7 +5,6 @@ const {
     ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
@@ -71,6 +70,7 @@ const TICK_MS = 1500;
 const TICKS = [1.2, 1.5, 1.8, 2.1, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0, 7.5, 10.0];
 
 module.exports = {
+    cooldown: 20,
     data: new SlashCommandBuilder()
         .setName('crash')
         .setDescription('Bet on a rising multiplier. Cash out before it crashes!')
@@ -83,11 +83,6 @@ module.exports = {
     async execute(interaction) {
         const { user } = interaction;
         const amount = interaction.options.getInteger('amount');
-
-        const cd = checkCooldown('crash', user.id, 20);
-        if (cd.onCooldown) {
-            return interaction.editReply({ content: `Crash cooling down. Wait **${cd.remaining}s**.`, ephemeral: true });
-        }
 
         try {
             const profile = await db.getUser(user.id);

@@ -5,7 +5,6 @@ const {
     ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
@@ -25,6 +24,7 @@ function getResult(player, bot) {
 }
 
 module.exports = {
+    cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('rps')
         .setDescription('Rock Paper Scissors against the bot. Win = 2x, tie = refund.')
@@ -37,11 +37,6 @@ module.exports = {
     async execute(interaction) {
         const { user } = interaction;
         const amount = interaction.options.getInteger('amount');
-
-        const cd = checkCooldown('rps', user.id, 10);
-        if (cd.onCooldown) {
-            return interaction.editReply({ content: `Chill. Wait **${cd.remaining}s**.`, ephemeral: true });
-        }
 
         try {
             const profile = await db.getUser(user.id);

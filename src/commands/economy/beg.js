@@ -4,7 +4,6 @@ const {
     SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
@@ -23,20 +22,13 @@ const BEG_RESPONSES = [
 const JUNK_ITEMS = ['Old Boot', 'Junk Seaweed', 'Common Worm'];
 
 module.exports = {
+    cooldown: 45,
     data: new SlashCommandBuilder()
         .setName('beg')
         .setDescription('Beg for spare change. Small payouts, 45s cooldown.'),
 
     async execute(interaction) {
         const { user } = interaction;
-
-        const cd = checkCooldown('beg', user.id, 45);
-        if (cd.onCooldown) {
-            return interaction.editReply({
-                content: `Stay chill. Wait **${cd.remaining}s** before begging again.`,
-                ephemeral: true
-            });
-        }
 
         try {
             const payout = Math.floor(Math.random() * 101) + 20;

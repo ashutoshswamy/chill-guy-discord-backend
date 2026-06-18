@@ -5,7 +5,6 @@ const {
     ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
@@ -48,6 +47,7 @@ function buildContainer(user, bet, current, round, potentialWin, status = null, 
 }
 
 module.exports = {
+    cooldown: 8,
     data: new SlashCommandBuilder()
         .setName('higherlower')
         .setDescription('Guess higher or lower. Keep going to multiply your winnings.')
@@ -60,11 +60,6 @@ module.exports = {
     async execute(interaction) {
         const { user } = interaction;
         const amount = interaction.options.getInteger('amount');
-
-        const cd = checkCooldown('higherlower', user.id, 30);
-        if (cd.onCooldown) {
-            return interaction.editReply({ content: `Game on cooldown. Wait **${cd.remaining}s**.`, ephemeral: true });
-        }
 
         try {
             const profile = await db.getUser(user.id);

@@ -5,7 +5,6 @@ const {
     ActionRowBuilder, ButtonBuilder, ButtonStyle
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
@@ -98,6 +97,7 @@ function buildPlinkoContainer(user, betAmount, boardString, mult = null, net = n
 }
 
 module.exports = {
+    cooldown: 15,
     data: new SlashCommandBuilder()
         .setName('plinko')
         .setDescription('Drop a ball down the Plinko board to win multipliers.')
@@ -119,17 +119,6 @@ module.exports = {
         };
 
         const playPlinko = async (activeInteraction, isButton, buttonInteraction) => {
-            const cd = checkCooldown('plinko', user.id, 15);
-            if (cd.onCooldown) {
-                const msg = { content: `Plinko board is clearing. Wait **${cd.remaining}s** before dropping another ball.`, ephemeral: true };
-                if (isButton) {
-                    await buttonInteraction.reply(msg);
-                } else {
-                    await activeInteraction.editReply(msg);
-                }
-                return null;
-            }
-
             const profile = await db.getUser(user.id);
             if (profile.wallet < amount) {
                 const msg = { content: `Not enough coins. You have ${coin} **${profile.wallet.toLocaleString()}** in wallet.`, ephemeral: true };

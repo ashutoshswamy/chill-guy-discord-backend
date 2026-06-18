@@ -5,7 +5,6 @@ const {
     ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
@@ -74,6 +73,7 @@ function buildEmbed(playerHand, dealerHand, hideDealer, user, amount, status = n
 }
 
 module.exports = {
+    cooldown: 10,
     data: new SlashCommandBuilder()
         .setName('blackjack')
         .setDescription('Play blackjack against the dealer. Beat 21 or go bust.')
@@ -86,11 +86,6 @@ module.exports = {
     async execute(interaction) {
         const { user } = interaction;
         const amount = interaction.options.getInteger('amount');
-
-        const cd = checkCooldown('blackjack', user.id, 30);
-        if (cd.onCooldown) {
-            return interaction.editReply({ content: `Table is busy. Wait **${cd.remaining}s**.`, ephemeral: true });
-        }
 
         try {
             const profile = await db.getUser(user.id);

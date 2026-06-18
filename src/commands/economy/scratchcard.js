@@ -5,7 +5,6 @@ const {
     ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { getEmoji } = require('../../utils/emojis');
 
 const coin = getEmoji('coin');
@@ -98,6 +97,7 @@ function rollMultiplier() {
 const sessions = new Map();
 
 module.exports = {
+    cooldown: 15,
     data: new SlashCommandBuilder()
         .setName('scratchcard')
         .setDescription('Buy a scratch card and reveal tiles to find matching symbols.')
@@ -115,11 +115,6 @@ module.exports = {
         const { user } = interaction;
         const tierName = interaction.options.getString('tier') || 'Bronze';
         const cardType = CARD_TYPES.find(c => c.name === tierName);
-
-        const cd = checkCooldown('scratchcard', user.id, 15);
-        if (cd.onCooldown) {
-            return interaction.editReply({ content: `Scratching too fast. Wait **${cd.remaining}s**.`, ephemeral: true });
-        }
 
         try {
             const profile = await db.getUser(user.id);

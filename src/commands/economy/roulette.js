@@ -4,7 +4,6 @@ const {
     SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
@@ -26,6 +25,7 @@ function colorEmoji(color) {
 }
 
 module.exports = {
+    cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('roulette')
         .setDescription('Spin the roulette wheel. Red/Black (2x), Green (14x), Number 0-36 (36x).')
@@ -43,11 +43,6 @@ module.exports = {
         const { user } = interaction;
         const amount = interaction.options.getInteger('amount');
         const betInput = interaction.options.getString('bet').toLowerCase().trim();
-
-        const cd = checkCooldown('roulette', user.id, 15);
-        if (cd.onCooldown) {
-            return interaction.editReply({ content: `Wheel still spinning. Wait **${cd.remaining}s**.`, ephemeral: true });
-        }
 
         let betType = null;
         let betNumber = null;

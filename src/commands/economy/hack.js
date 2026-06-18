@@ -5,7 +5,6 @@ const {
     ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
@@ -102,17 +101,13 @@ function buildHackContainer(user, targetSeq, currentSeq, status, payout = 0, wal
 }
 
 module.exports = {
+    cooldown: 600,
     data: new SlashCommandBuilder()
         .setName('hack')
         .setDescription('Breach a secure mainframe by matching the sequence. High payout, requires skill!'),
 
     async execute(interaction) {
         const { user } = interaction;
-
-        const cd = checkCooldown('hack', user.id, 60);
-        if (cd.onCooldown) {
-            return interaction.editReply({ content: `Terminal cooling down. Wait **${cd.remaining}s** before launching another bypass.`, ephemeral: true });
-        }
 
         try {
             const targetSeq = getRandomSequence(4);

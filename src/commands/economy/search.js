@@ -5,7 +5,6 @@ const {
     ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
@@ -129,17 +128,13 @@ const LOCATIONS = {
 const JUNK_ITEMS = ['Old Boot', 'Junk Seaweed', 'Common Worm'];
 
 module.exports = {
+    cooldown: 60,
     data: new SlashCommandBuilder()
         .setName('search')
         .setDescription('Search funny locations for loose change. Risky places pay more!'),
 
     async execute(interaction) {
         const { user } = interaction;
-
-        const cd = checkCooldown('search', user.id, 30);
-        if (cd.onCooldown) {
-            return interaction.editReply({ content: `Wait **${cd.remaining}s** before searching again. Keep it chill.`, ephemeral: true });
-        }
 
         try {
             // Select 3 random unique locations

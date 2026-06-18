@@ -5,7 +5,6 @@ const {
     ActionRowBuilder, ButtonBuilder, ButtonStyle
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
@@ -117,6 +116,7 @@ function buildContainer(s1, s2, s3, statusText, user, amount, result, wallet, is
 }
 
 module.exports = {
+    cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('slots')
         .setDescription('Spin the slot machine. Match symbols to win big.')
@@ -138,19 +138,7 @@ module.exports = {
         };
 
         const playSlots = async (activeInteraction, isButton, buttonInteraction) => {
-            // 1. Cooldown Check
-            const cd = checkCooldown('slots', user.id, 15);
-            if (cd.onCooldown) {
-                const msg = { content: `Slot machine cooling down. Wait **${cd.remaining}s**.`, ephemeral: true };
-                if (isButton) {
-                    await buttonInteraction.reply(msg);
-                } else {
-                    await activeInteraction.editReply(msg);
-                }
-                return null;
-            }
-
-            // 2. Balance Check
+            // 1. Balance Check
             const profile = await db.getUser(user.id);
             if (profile.wallet < amount) {
                 const msg = { content: `Not enough coins. You have ${coin} **${profile.wallet.toLocaleString()}** in wallet.`, ephemeral: true };

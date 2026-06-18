@@ -14,6 +14,7 @@ const coin = getEmoji('coin');
 const CRIMES = {
     shoplift: {
         name: 'Shoplifting',
+        cooldown: 300,
         successChance: 0.85,
         minCoins: 60,
         maxCoins: 150,
@@ -29,6 +30,7 @@ const CRIMES = {
     },
     atm: {
         name: 'ATM Hacking',
+        cooldown: 600,
         successChance: 0.55,
         minCoins: 250,
         maxCoins: 600,
@@ -44,6 +46,7 @@ const CRIMES = {
     },
     gta: {
         name: 'Grand Theft Auto',
+        cooldown: 1800,
         successChance: 0.35,
         minCoins: 700,
         maxCoins: 1800,
@@ -59,6 +62,7 @@ const CRIMES = {
     },
     heist: {
         name: 'Casino Heist',
+        cooldown: 1800,
         successChance: 0.15,
         minCoins: 2500,
         maxCoins: 6000,
@@ -81,11 +85,6 @@ module.exports = {
 
     async execute(interaction) {
         const { user } = interaction;
-
-        const cd = checkCooldown('crime', user.id, 45);
-        if (cd.onCooldown) {
-            return interaction.editReply({ content: `The cops are patrolling! Wait **${cd.remaining}s** before planning another crime.`, ephemeral: true });
-        }
 
         try {
             const container = new ContainerBuilder()
@@ -123,10 +122,20 @@ module.exports = {
 
             collector.on('collect', async i => {
                 await i.deferUpdate();
-                collector.stop('selected');
 
                 const key = i.customId.replace('crime_op_', '');
                 const op = CRIMES[key];
+
+                const cd = checkCooldown(`crime_${key}`, user.id, op.cooldown);
+                if (cd.onCooldown) {
+                    const mins = Math.ceil(parseFloat(cd.remaining) / 60);
+                    await interaction.editReply({
+                        content: `You need to lay low after **${op.name}**. Try again in **${cd.remaining}s** (~${mins}m).`,
+                    }).catch(() => null);
+                    return;
+                }
+
+                collector.stop('selected');
 
                 const success = Math.random() < op.successChance;
                 let resultMsg = '';

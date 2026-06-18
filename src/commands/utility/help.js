@@ -20,7 +20,7 @@ const CATEGORIES = {
             { name: '/daily', desc: 'Claim daily allowance of 500-1000 coins.', details: 'Cooldown: 24 hours' },
             { name: '/weekly', desc: 'Claim weekly allowance of 5000-8000 coins.', details: 'Cooldown: 7 days' },
             { name: '/monthly', desc: 'Claim monthly allowance of 25000-40000 coins.', details: 'Cooldown: 30 days' },
-            { name: '/beg', desc: 'Beg for spare change.', details: 'Cooldown: 45s · Payout: 5-50 coins' },
+            { name: '/beg', desc: 'Beg for spare change.', details: 'Cooldown: 45s · Payout: 20-120 coins' },
             { name: '/search', desc: 'Search funny locations for loose change or items.', details: 'Cooldown: 30s · Payout depends on risk level' }
         ]
     },
@@ -43,9 +43,11 @@ const CATEGORIES = {
             { name: '/dice <amount> <bet>', desc: 'Roll a pair of dice and bet on results.', details: 'Cooldown: 15s · Target options: Under/Over 7, Even/Odd, etc.' },
             { name: '/hack', desc: 'Breach a secure mainframe by matching key sequence.', details: 'Cooldown: 30s · Requires speed & pattern matching' },
             { name: '/scramble', desc: 'Scramble a word and guess the correct word.', details: 'Cooldown: 30s · Earn: 150-250 coins' },
+            { name: '/trivia [difficulty]', desc: 'Answer a trivia question and win coins.', details: 'Cooldown: 30m · Difficulty: easy, medium, hard' },
+            { name: '/wordguess', desc: 'Play a Wordle-style word guessing game to win coins.', details: 'Cooldown: 45m · Guess the 5-letter word' },
             { name: '/crime', desc: 'Commit a high-stakes crime for major payouts.', details: 'Cooldown: 45s · Risks fine on failure' },
             { name: '/rob <target>', desc: 'Attempt to steal from another wallet.', details: 'Cooldown: 10m · Success: 40% (fine on failure)' },
-            { name: '/bankrob <target>', desc: 'Attempt to rob another user\'s bank.', details: 'Cooldown: 1h · Success: 15% (fine on failure)' },
+            { name: '/bankrob <target>', desc: "Attempt to rob another user's bank.", details: 'Cooldown: 1h · Success: 15% (fine on failure)' },
             { name: '/lottery buy <tickets>', desc: 'Buy lottery tickets (100 coins each).', details: 'Cooldown: None · Draw occurs every 24 hours' },
             { name: '/lottery info', desc: 'Check current lottery pot, round, and your tickets.', details: 'Cooldown: None' },
             { name: '/lottery draw', desc: 'Draw the lottery winner.', details: 'Cooldown: Available 24h after last draw' }
@@ -120,7 +122,7 @@ const CATEGORIES = {
         commands: [
             { name: '/profile [user]', desc: 'View comprehensive statistics and wallet/bank/rank summary.', details: 'Cooldown: None' },
             { name: '/rank [user]', desc: 'Check level, total XP, and progression.', details: 'Cooldown: None · View level pay bonuses' },
-            { name: '/balance [user]', desc: 'View wallet, bank, and net worth.', details: 'Cooldown: None · Easy deposit/withdraw buttons' },
+            { name: '/balance [user]', desc: 'Check wallet, bank, and net worth.', details: 'Cooldown: None · Option: user (optional)' },
             { name: '/achievements [user]', desc: 'Check completed and locked career achievements.', details: 'Cooldown: None' },
             { name: '/streak [user]', desc: 'Check daily claim and job work shift streaks.', details: 'Cooldown: None' },
             { name: '/quest', desc: 'View current daily quests and rewards progress.', details: 'Cooldown: None · Resets every 24 hours' }
@@ -130,9 +132,10 @@ const CATEGORIES = {
         label: 'Utility',
         emoji: '',
         commands: [
-            { name: '/ping', desc: 'Check bot Latency.', details: 'Cooldown: None' },
+            { name: '/ping', desc: 'Check bot latency.', details: 'Cooldown: None' },
             { name: '/cooldowns [user]', desc: 'Check active action and reward cooldowns.', details: 'Cooldown: None · Option: user (optional)' },
-            { name: '/help', desc: 'Browse help commands.', details: 'Cooldown: None · Dropdown & page pagination' }
+            { name: '/help', desc: 'Browse all bot commands by category.', details: 'Cooldown: None · Dropdown & page pagination' },
+            { name: '/resetprofile', desc: 'Wipe your entire profile and start fresh. This cannot be undone.', details: 'Cooldown: None · Irreversible' }
         ]
     },
     admin: {

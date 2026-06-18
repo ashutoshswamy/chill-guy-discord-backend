@@ -52,7 +52,7 @@ function getRollResult(d1, d2, betType) {
 
 const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-function buildDiceContainer(user, betAmount, d1, d2, betType, result, wallet, isRolling = false) {
+function buildDiceContainer(user, betAmount, d1, d2, betType, result, wallet, isRolling = false, isDisabled = false) {
     const title = isRolling ? 'Rolling Dice...' : result.won ? 'Winner!' : 'No luck!';
     
     let contentStr = '';
@@ -84,14 +84,14 @@ function buildDiceContainer(user, betAmount, d1, d2, betType, result, wallet, is
             new TextDisplayBuilder().setContent(contentStr)
         );
 
-    // Keep Roll Again button disabled when rolling
+    // Keep Roll Again button disabled when rolling or disabled on timeout
     container.addActionRowComponents(
         new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId('dice_roll_again')
                 .setLabel('Roll Again')
                 .setStyle(ButtonStyle.Primary)
-                .setDisabled(isRolling)
+                .setDisabled(isRolling || isDisabled)
         )
     );
 
@@ -218,9 +218,7 @@ module.exports = {
                 if (reason === 'user') return;
                 try {
                     const result = { won: lastState.won, multiplier: lastState.multiplier, condition: lastState.condition };
-                    const payload = buildDiceContainer(user, amount, lastState.d1, lastState.d2, betType, result, lastState.wallet, false);
-                    // Disable the Roll Again button on timeout
-                    payload.components[0].components[2].components[0].setDisabled(true); 
+                    const payload = buildDiceContainer(user, amount, lastState.d1, lastState.d2, betType, result, lastState.wallet, false, true);
                     await interaction.editReply(payload).catch(() => null);
                 } catch (err) {
                     // Ignore

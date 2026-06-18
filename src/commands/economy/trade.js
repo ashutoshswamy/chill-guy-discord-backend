@@ -417,6 +417,18 @@ module.exports = {
                         return;
                     }
                 });
+
+                tradeCollector.on('end', async (collected, reason) => {
+                    const currentTrade = activeTrades.get(response.id);
+                    if (currentTrade && currentTrade.status === 'active') {
+                        currentTrade.status = 'cancelled';
+                        activeTrades.delete(response.id);
+                        await interaction.editReply({
+                            flags: MessageFlags.IsComponentsV2,
+                            components: [buildTradeContainer(currentTrade, user.id)]
+                        }).catch(() => null);
+                    }
+                });
             }
         });
 

@@ -127,7 +127,26 @@ module.exports = {
                             { name: 'Mines', value: 'mines' },
                             { name: 'Higher Lower', value: 'higherlower' },
                             { name: 'Horse Race', value: 'horserace' }
-                        ))),
+                        )))
+        .addSubcommand(sub =>
+            sub.setName('loan-forgive')
+                .setDescription("Forgive a user's active loan.")
+                .addUserOption(opt => opt.setName('user').setDescription('The user whose loan to forgive').setRequired(true)))
+        .addSubcommand(sub =>
+            sub.setName('loan-config')
+                .setDescription('Configure loan settings for this server.')
+                .addNumberOption(opt =>
+                    opt.setName('interest_rate')
+                        .setDescription('Interest rate as a percentage (1-50)')
+                        .setMinValue(1).setMaxValue(50))
+                .addIntegerOption(opt =>
+                    opt.setName('max_amount')
+                        .setDescription('Maximum loan amount per user')
+                        .setMinValue(100).setMaxValue(1000000))
+                .addIntegerOption(opt =>
+                    opt.setName('term_days')
+                        .setDescription('Loan term in days (1-30)')
+                        .setMinValue(1).setMaxValue(30))),
 
     async autocomplete(interaction) {
         const focusedValue = interaction.options.getFocused().toLowerCase();
@@ -357,6 +376,57 @@ module.exports = {
                                 )
                             )
                             .setThumbnailAccessory(new ThumbnailBuilder().setURL(targetUser.displayAvatarURL({ forceStatic: true })))
+                    );
+
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
+            }
+
+            if (sub === 'loan-forgive') {
+                const targetUser = interaction.options.getUser('user');
+                if (targetUser.bot) return interaction.editReply({ content: 'Bots cannot have loans.', ephemeral: true });
+
+                const forgiven = await db.forgiveLoan(targetUser.id);
+                const container = new ContainerBuilder()
+                    .addSectionComponents(
+                        new SectionBuilder()
+                            .addTextDisplayComponents(
+                                new TextDisplayBuilder().setContent(
+                                    `## Loan Forgiven\nForgave **${targetUser.username}**'s loan of ${coin} **${forgiven.principal.toLocaleString()}** coins (total owed was ${coin} **${forgiven.total_owed.toLocaleString()}**).`
+                                )
+                            )
+                            .setThumbnailAccessory(new ThumbnailBuilder().setURL(targetUser.displayAvatarURL({ forceStatic: true })))
+                    );
+
+                return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });
+            }
+
+            if (sub === 'loan-config') {
+                if (!interaction.guildId) {
+                    return interaction.editReply({ content: 'This command must be used in a server.', ephemeral: true });
+                }
+
+                const interestRate = interaction.options.getNumber('interest_rate');
+                const maxAmount    = interaction.options.getInteger('max_amount');
+                const termDays     = interaction.options.getInteger('term_days');
+
+                const updates = {};
+                if (interestRate != null) updates.loan_interest_rate = interestRate;
+                if (maxAmount    != null) updates.loan_max_amount    = maxAmount;
+                if (termDays     != null) updates.loan_term_days     = termDays;
+
+                if (Object.keys(updates).length === 0) {
+                    return interaction.editReply({ content: 'Provide at least one setting to update.', ephemeral: true });
+                }
+
+                const settings = await db.updateGuildSettings(interaction.guildId, updates);
+                const container = new ContainerBuilder()
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                            `## Loan Config Updated\n` +
+                            `**Interest Rate:** ${Number(settings.loan_interest_rate).toFixed(1)}%\n` +
+                            `**Max Loan Amount:** ${coin} ${Number(settings.loan_max_amount).toLocaleString()}\n` +
+                            `**Loan Term:** ${settings.loan_term_days} days`
+                        )
                     );
 
                 return interaction.editReply({ flags: MessageFlags.IsComponentsV2, components: [container] });

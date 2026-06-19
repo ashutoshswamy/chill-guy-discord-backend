@@ -957,6 +957,16 @@ module.exports = {
     updateDailyStreak,
     getActiveQuests,
     updateQuestProgress,
+    // guild settings
+    getGuildSettings,
+    updateGuildSettings,
+    // loans
+    getActiveLoan,
+    getUserLoanHistory,
+    takeLoan,
+    repayLoan,
+    forgiveLoan,
+    checkAndDefaultLoan,
 };
 
 // ============================================================
@@ -1320,13 +1330,13 @@ async function updateQuestProgress(userId, questType, amount = 1) {
             .eq('quest_type', questType)
             .eq('completed', false)
             .gt('expires_at', now);
-        
+
         if (error || !quests || quests.length === 0) return;
 
         for (const q of quests) {
             const newProgress = Math.min(q.target, q.progress + amount);
             const completed = newProgress >= q.target;
-            
+
             await supabase
                 .from('user_quests')
                 .update({ progress: newProgress, completed })
@@ -1344,4 +1354,197 @@ async function updateQuestProgress(userId, questType, amount = 1) {
     }
 }
 
+// ============================================================
+// GUILD SETTINGS
+// ============================================================
+
+async function getGuildSettings(guildId) {
+    assertDb();
+    const { data, error } = await supabase
+        .from('guild_settings')
+        .select('*')
+        .eq('guild_id', guildId)
+        .single();
+
+    if (error && error.code === 'PGRST116') {
+        const { data: created, error: insertErr } = await supabase
+            .from('guild_settings')
+            .insert({ guild_id: guildId })
+            .select()
+            .single();
+        if (insertErr) throw insertErr;
+        return created;
+    }
+    if (error) throw error;
+    return data;
+}
+
+async function updateGuildSettings(guildId, updates) {
+    assertDb();
+    await getGuildSettings(guildId);
+    const { data, error } = await supabase
+        .from('guild_settings')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('guild_id', guildId)
+        .select()
+        .single();
+    if (error) throw error;
+    return data;
+}
+
+// ============================================================
+// LOANS
+// ============================================================
+
+async function getActiveLoan(userId) {
+    assertDb();
+    const { data, error } = await supabase
+        .from('user_loans')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('paid_off', false)
+        .eq('defaulted', false)
+        .order('taken_at', { ascending: false })
+        .limit(1)
+        .single();
+
+    if (error && error.code === 'PGRST116') return null;
+    if (error) throw error;
+    return data;
+}
+
+async function getUserLoanHistory(userId, limit = 5) {
+    assertDb();
+    const { data, error } = await supabase
+        .from('user_loans')
+        .select('*')
+        .eq('user_id', userId)
+        .order('taken_at', { ascending: false })
+        .limit(limit);
+    if (error) throw error;
+    return data || [];
+}
+
+async function takeLoan(userId, amount, interestRate, termDays) {
+    assertDb();
+    const user = await getUser(userId);
+    if (user.wallet + user.bank === 0 && amount > 1000) {
+        // allow small starter loan
+    }
+
+    const interestAmt = Math.floor(amount * (interestRate / 100));
+    const totalOwed   = amount + interestAmt;
+    const dueAt       = new Date(Date.now() + termDays * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data, error } = await supabase
+        .from('user_loans')
+        .insert({
+            user_id:       userId,
+            principal:     amount,
+            interest_rate: interestRate,
+            interest_amt:  interestAmt,
+            total_owed:    totalOwed,
+            remaining:     totalOwed,
+            due_at:        dueAt,
+        })
+        .select()
+        .single();
+    if (error) throw error;
+
+    await updateWallet(userId, amount);
+    return data;
+}
+
+async function repayLoan(loanId, userId, amount) {
+    assertDb();
+    const { data: loan, error: fetchErr } = await supabase
+        .from('user_loans')
+        .select('*')
+        .eq('id', loanId)
+        .eq('user_id', userId)
+        .single();
+
+    if (fetchErr) throw fetchErr;
+    if (!loan) throw new Error('Loan not found.');
+    if (loan.paid_off || loan.defaulted) throw new Error('Loan is already closed.');
+
+    const user = await getUser(userId);
+
+    // Check if overdue — apply late penalty (2% of principal per day overdue)
+    const now = Date.now();
+    const dueAt = new Date(loan.due_at).getTime();
+    let remaining = loan.remaining;
+    if (now > dueAt) {
+        const daysLate = Math.floor((now - dueAt) / (24 * 60 * 60 * 1000));
+        const latePenalty = Math.floor(loan.principal * 0.02 * daysLate);
+        remaining = Math.min(loan.remaining + latePenalty, loan.principal * 3); // cap at 3x
+    }
+
+    const payAmount = Math.min(amount, remaining, user.wallet);
+    if (payAmount <= 0) throw new Error('Insufficient wallet balance to repay.');
+
+    await updateWallet(userId, -payAmount);
+
+    const newPaid      = loan.amount_paid + payAmount;
+    const newRemaining = remaining - payAmount;
+    const paidOff      = newRemaining <= 0;
+
+    const updates = {
+        amount_paid: newPaid,
+        remaining:   Math.max(0, newRemaining),
+        paid_off:    paidOff,
+    };
+    if (paidOff) updates.paid_off_at = new Date().toISOString();
+
+    const { data, error } = await supabase
+        .from('user_loans')
+        .update(updates)
+        .eq('id', loanId)
+        .select()
+        .single();
+    if (error) throw error;
+
+    return { loan: data, payAmount, paidOff, remaining: Math.max(0, newRemaining) };
+}
+
+async function forgiveLoan(userId) {
+    assertDb();
+    const loan = await getActiveLoan(userId);
+    if (!loan) throw new Error('No active loan found for this user.');
+
+    const { error } = await supabase
+        .from('user_loans')
+        .update({ paid_off: true, paid_off_at: new Date().toISOString(), remaining: 0 })
+        .eq('id', loan.id);
+    if (error) throw error;
+    return loan;
+}
+
+async function checkAndDefaultLoan(userId) {
+    assertDb();
+    const loan = await getActiveLoan(userId);
+    if (!loan) return null;
+
+    const now = Date.now();
+    const dueAt = new Date(loan.due_at).getTime();
+    if (now <= dueAt) return null;
+
+    // Grace period: 2 extra days before hard default
+    const gracePeriodMs = 2 * 24 * 60 * 60 * 1000;
+    if (now < dueAt + gracePeriodMs) return { warning: true, loan };
+
+    // Hard default
+    const { error } = await supabase
+        .from('user_loans')
+        .update({ defaulted: true, defaulted_at: new Date().toISOString() })
+        .eq('id', loan.id);
+    if (error) throw error;
+
+    // Penalty: take 20% of wallet as recovery
+    const user = await getUser(userId);
+    const penalty = Math.floor(user.wallet * 0.20);
+    if (penalty > 0) await updateWallet(userId, -penalty);
+
+    return { defaulted: true, loan, penalty };
+}
 

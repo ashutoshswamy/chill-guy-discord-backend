@@ -21,7 +21,14 @@ const CATEGORIES = {
             { name: '/weekly', desc: 'Claim weekly allowance of 5000-8000 coins.', details: 'Cooldown: 7 days' },
             { name: '/monthly', desc: 'Claim monthly allowance of 25000-40000 coins.', details: 'Cooldown: 30 days' },
             { name: '/beg', desc: 'Beg for spare change.', details: 'Cooldown: 45s · Payout: 20-120 coins' },
-            { name: '/search', desc: 'Search funny locations for loose change or items.', details: 'Cooldown: 30s · Payout depends on risk level' }
+            { name: '/search', desc: 'Search funny locations for loose change or items.', details: 'Cooldown: 30s · Payout depends on risk level' },
+            { name: '/loan borrow <amount>', desc: 'Take out a coin loan with interest. Repay within the term to avoid penalties.', details: 'Cooldown: None · Max amount set by server admins (default 10,000)' },
+            { name: '/loan repay <amount>', desc: 'Repay your active loan. Partial payments accepted.', details: 'Cooldown: None · Late payments incur +2%/day penalty on remaining balance' },
+            { name: '/loan status', desc: 'View your current loan, due date, progress bar, and any late penalties.', details: 'Cooldown: None' },
+            { name: '/loan history', desc: 'View your last 5 loans and their outcomes.', details: 'Cooldown: None' },
+            { name: '/tax info', desc: 'View the server\'s tax rate and whether tax collection is enabled.', details: 'Cooldown: None' },
+            { name: '/tax set <rate> [enabled]', desc: 'Set the server tax rate (0-50%) and toggle collection on/off.', details: 'Requires: Manage Server' },
+            { name: '/tax collect [bank_only]', desc: 'Collect taxes from all registered server members\' wallets (or banks).', details: 'Requires: Manage Server · Rate configured via /tax set' }
         ]
     },
     gambling: {
@@ -45,12 +52,17 @@ const CATEGORIES = {
             { name: '/scramble', desc: 'Scramble a word and guess the correct word.', details: 'Cooldown: 30s · Earn: 150-250 coins' },
             { name: '/trivia [difficulty]', desc: 'Answer a trivia question and win coins.', details: 'Cooldown: 30m · Difficulty: easy, medium, hard' },
             { name: '/wordguess', desc: 'Play a Wordle-style word guessing game to win coins.', details: 'Cooldown: 45m · Guess the 5-letter word' },
+            { name: '/hangman', desc: 'Guess the hidden word letter by letter to win coins.', details: 'Cooldown: 30m · Reward: 200-900 coins (scales with word length)' },
+            { name: '/memory', desc: 'Flip cards to find all matching pairs and win coins.', details: 'Cooldown: 20m · Win: 800 coins for full board clear' },
+            { name: '/typerace', desc: 'Race to type a prompt as fast as possible to win coins.', details: 'Cooldown: 15m · Reward: 200-1200 coins based on WPM' },
             { name: '/crime', desc: 'Commit a high-stakes crime for major payouts.', details: 'Cooldown: 45s · Risks fine on failure' },
             { name: '/rob <target>', desc: 'Attempt to steal from another wallet.', details: 'Cooldown: 10m · Success: 40% (fine on failure)' },
             { name: '/bankrob <target>', desc: "Attempt to rob another user's bank.", details: 'Cooldown: 1h · Success: 15% (fine on failure)' },
             { name: '/lottery buy <tickets>', desc: 'Buy lottery tickets (100 coins each).', details: 'Cooldown: None · Draw occurs every 24 hours' },
             { name: '/lottery info', desc: 'Check current lottery pot, round, and your tickets.', details: 'Cooldown: None' },
-            { name: '/lottery draw', desc: 'Draw the lottery winner.', details: 'Cooldown: Available 24h after last draw' }
+            { name: '/lottery draw', desc: 'Draw the lottery winner.', details: 'Cooldown: Available 24h after last draw' },
+            { name: '/heist start <target>', desc: 'Start a group heist — others can join via button within 60s. Reward split on success; wallet loss on failure.', details: 'Cooldown: 1h per server · Min 2 players (configurable) · Success: 35%+12%/player' },
+            { name: '/heist config [min_players] [cooldown_mins]', desc: 'Configure heist min players and cooldown for this server.', details: 'Requires: Manage Server' }
         ]
     },
     jobs: {
@@ -148,7 +160,9 @@ const CATEGORIES = {
             { name: '/admin item-give <user> <item> [quantity]', desc: 'Give an item to a user.', details: 'Requires: Bot Developer · Autocomplete support' },
             { name: '/admin item-remove <user> <item> [quantity]', desc: 'Remove an item from a user.', details: 'Requires: Bot Developer · Autocomplete support' },
             { name: '/admin xp-add <user> <amount>', desc: 'Add XP to a user.', details: 'Requires: Bot Developer' },
-            { name: '/admin cooldown-reset <user> <action>', desc: 'Reset cooldowns for a user.', details: 'Requires: Bot Developer' }
+            { name: '/admin cooldown-reset <user> <action>', desc: 'Reset cooldowns for a user.', details: 'Requires: Bot Developer' },
+            { name: '/admin loan-forgive <user>', desc: 'Forgive a user\'s entire active loan and clear their credit flag.', details: 'Requires: Bot Developer' },
+            { name: '/admin loan-config [interest_rate] [max_amount] [term_days]', desc: 'Configure loan terms for this server.', details: 'Requires: Bot Developer · Defaults: 10% / 10,000 / 7 days' }
         ]
     }
 };

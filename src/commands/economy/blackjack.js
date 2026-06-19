@@ -72,8 +72,9 @@ function buildEmbed(playerHand, dealerHand, hideDealer, user, amount, status = n
     return container;
 }
 
+const COOLDOWN_MS = 10 * 1000;
+
 module.exports = {
-    cooldown: 10,
     data: new SlashCommandBuilder()
         .setName('blackjack')
         .setDescription('Play blackjack against the dealer. Beat 21 or go bust.')
@@ -86,6 +87,12 @@ module.exports = {
     async execute(interaction) {
         const { user } = interaction;
         const amount = interaction.options.getInteger('amount');
+
+        const cd = await db.checkAndSetCooldown(user.id, 'blackjack', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const s = Math.ceil(cd.remaining / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${s}s**.`, ephemeral: true });
+        }
 
         try {
             const profile = await db.getUser(user.id);

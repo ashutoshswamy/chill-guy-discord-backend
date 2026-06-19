@@ -96,8 +96,9 @@ function buildPlinkoContainer(user, betAmount, boardString, mult = null, net = n
     };
 }
 
+const COOLDOWN_MS = 15 * 1000;
+
 module.exports = {
-    cooldown: 15,
     data: new SlashCommandBuilder()
         .setName('plinko')
         .setDescription('Drop a ball down the Plinko board to win multipliers.')
@@ -110,6 +111,12 @@ module.exports = {
     async execute(interaction) {
         const { user } = interaction;
         const amount = interaction.options.getInteger('amount');
+
+        const cd = await db.checkAndSetCooldown(user.id, 'plinko', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const s = Math.ceil(cd.remaining / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${s}s**.`, ephemeral: true });
+        }
 
         let lastState = {
             boardString: '',

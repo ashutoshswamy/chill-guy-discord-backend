@@ -84,8 +84,8 @@ const CATEGORIES = {
             { name: '/hunt', desc: 'Hunt for game in the wilderness.', details: 'Cooldown: 1h · Requires Hunting Rifle item' },
             { name: '/dig', desc: 'Dig for buried treasures.', details: 'Cooldown: 45m · Requires Shovel item' },
             { name: '/chop', desc: 'Chop down trees for valuable timber.', details: 'Cooldown: 45m · Requires Axe item' },
-            { name: '/mine', desc: 'Mine ore veins and rare gems.', details: 'Cooldown: 45m · Requires Pickaxe item' },
-            { name: '/fish', desc: 'Cast a fishing line.', details: 'Cooldown: 45m · Requires Fishing Pole item' }
+            { name: '/mine', desc: 'Mine ore veins and rare gems.', details: 'Cooldown: 60s · Requires Pickaxe item' },
+            { name: '/fish', desc: 'Cast a fishing line.', details: 'Cooldown: 45s · Requires Fishing Pole item' }
         ]
     },
     pets: {

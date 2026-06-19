@@ -101,8 +101,9 @@ function buildDiceContainer(user, betAmount, d1, d2, betType, result, wallet, is
     };
 }
 
+const COOLDOWN_MS = 5 * 1000;
+
 module.exports = {
-    cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('dice')
         .setDescription('Roll a pair of dice. Bet on Under/Over 7, Even/Odd, Exactly 7, or Doubles.')
@@ -128,6 +129,12 @@ module.exports = {
         const { user } = interaction;
         const amount = interaction.options.getInteger('amount');
         const betType = interaction.options.getString('bet');
+
+        const cd = await db.checkAndSetCooldown(user.id, 'dice', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const s = Math.ceil(cd.remaining / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${s}s**.`, ephemeral: true });
+        }
 
         let lastState = {
             d1: 1, d2: 1,

@@ -107,8 +107,9 @@ function buildContainer(user, playerRooster, enemyRooster, pHP, eHP, roundText, 
     return container;
 }
 
+const COOLDOWN_MS = 8 * 1000;
+
 module.exports = {
-    cooldown: 8,
     data: new SlashCommandBuilder()
         .setName('cockfight')
         .setDescription('Pit your rooster against a rival. Win to double your bet.')
@@ -121,6 +122,12 @@ module.exports = {
     async execute(interaction) {
         const { user } = interaction;
         const amount = interaction.options.getInteger('amount');
+
+        const cd = await db.checkAndSetCooldown(user.id, 'cockfight', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const s = Math.ceil(cd.remaining / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${s}s**.`, ephemeral: true });
+        }
 
         try {
             const profile = await db.getUser(user.id);

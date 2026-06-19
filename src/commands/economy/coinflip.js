@@ -9,8 +9,9 @@ const { getEmoji } = require('../../utils/emojis');
 
 const coin = getEmoji('coin');
 
+const COOLDOWN_MS = 5 * 1000;
+
 module.exports = {
-    cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('coinflip')
         .setDescription('Bet on heads or tails. 50/50 odds, 2x payout.')
@@ -32,6 +33,12 @@ module.exports = {
         const { user } = interaction;
         const amount = interaction.options.getInteger('amount');
         const choice = interaction.options.getString('choice');
+
+        const cd = await db.checkAndSetCooldown(user.id, 'coinflip', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const s = Math.ceil(cd.remaining / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${s}s**.`, ephemeral: true });
+        }
 
         try {
             const profile = await db.getUser(user.id);

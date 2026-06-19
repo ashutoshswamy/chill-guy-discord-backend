@@ -127,14 +127,21 @@ const LOCATIONS = {
 
 const JUNK_ITEMS = ['Old Boot', 'Junk Seaweed', 'Common Worm'];
 
+const COOLDOWN_MS = 60 * 1000;
+
 module.exports = {
-    cooldown: 60,
     data: new SlashCommandBuilder()
         .setName('search')
         .setDescription('Search funny locations for loose change. Risky places pay more!'),
 
     async execute(interaction) {
         const { user } = interaction;
+
+        const cd = await db.checkAndSetCooldown(user.id, 'search', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const s = Math.ceil(cd.remaining / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${s}s**.`, ephemeral: true });
+        }
 
         try {
             // Select 3 random unique locations

@@ -4,7 +4,6 @@ const {
     SeparatorBuilder, SeparatorSpacingSize, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
@@ -44,13 +43,15 @@ module.exports = {
             return interaction.editReply({ content: 'Bots have no coins to steal.', ephemeral: true });
         }
 
-        const cd = checkCooldown(`rob_${user.id}`, target.id, 120);
-        const globalCd = checkCooldown('rob', user.id, 60);
+        const globalCd = await db.checkAndSetCooldown(user.id, 'rob', 60 * 1000);
         if (globalCd.onCooldown) {
-            return interaction.editReply({ content: `Lay low. Wait **${globalCd.remaining}s** before robbing again.`, ephemeral: true });
+            const s = Math.ceil(globalCd.remaining / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${s}s**.`, ephemeral: true });
         }
-        if (cd.onCooldown) {
-            return interaction.editReply({ content: `Already robbed ${target.username} recently. Wait **${cd.remaining}s**.`, ephemeral: true });
+        const victimCd = await db.checkAndSetCooldown(target.id, 'rob_victim', 120 * 1000);
+        if (victimCd.onCooldown) {
+            const s = Math.ceil(victimCd.remaining / 1000);
+            return interaction.editReply({ content: `That user was robbed recently. Try again in **${s}s**.`, ephemeral: true });
         }
 
         try {

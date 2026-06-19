@@ -96,8 +96,9 @@ function rollMultiplier() {
 // Sessions stored in memory (per-user)
 const sessions = new Map();
 
+const COOLDOWN_MS = 15 * 1000;
+
 module.exports = {
-    cooldown: 15,
     data: new SlashCommandBuilder()
         .setName('scratchcard')
         .setDescription('Buy a scratch card and reveal tiles to find matching symbols.')
@@ -115,6 +116,12 @@ module.exports = {
         const { user } = interaction;
         const tierName = interaction.options.getString('tier') || 'Bronze';
         const cardType = CARD_TYPES.find(c => c.name === tierName);
+
+        const cd = await db.checkAndSetCooldown(user.id, 'scratchcard', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const s = Math.ceil(cd.remaining / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${s}s**.`, ephemeral: true });
+        }
 
         try {
             const profile = await db.getUser(user.id);

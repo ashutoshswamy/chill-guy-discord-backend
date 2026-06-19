@@ -37,8 +37,9 @@ function generateMinesGrid(minesCount) {
 
 const sessions = new Map();
 
+const COOLDOWN_MS = 15 * 1000;
+
 module.exports = {
-    cooldown: 15,
     data: new SlashCommandBuilder()
         .setName('mines')
         .setDescription('Play Mines. Reveal safe tiles to multiply your bet, cash out before hitting a mine.')
@@ -58,6 +59,12 @@ module.exports = {
         const { user } = interaction;
         const bet = interaction.options.getInteger('bet');
         const minesCount = interaction.options.getInteger('mines') || 3;
+
+        const cd = await db.checkAndSetCooldown(user.id, 'mines', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const s = Math.ceil(cd.remaining / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${s}s**.`, ephemeral: true });
+        }
 
         try {
             const profile = await db.getUser(user.id);

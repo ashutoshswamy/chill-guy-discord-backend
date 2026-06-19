@@ -69,8 +69,9 @@ function buildBar(current, crash) {
 const TICK_MS = 1500;
 const TICKS = [1.2, 1.5, 1.8, 2.1, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0, 7.5, 10.0];
 
+const COOLDOWN_MS = 20 * 1000;
+
 module.exports = {
-    cooldown: 20,
     data: new SlashCommandBuilder()
         .setName('crash')
         .setDescription('Bet on a rising multiplier. Cash out before it crashes!')
@@ -83,6 +84,12 @@ module.exports = {
     async execute(interaction) {
         const { user } = interaction;
         const amount = interaction.options.getInteger('amount');
+
+        const cd = await db.checkAndSetCooldown(user.id, 'crash', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const s = Math.ceil(cd.remaining / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${s}s**.`, ephemeral: true });
+        }
 
         try {
             const profile = await db.getUser(user.id);

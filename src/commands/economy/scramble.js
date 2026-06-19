@@ -92,8 +92,9 @@ function buildContainer(user, scrambled, word, status = 'live', reward = 0, wall
 // Active games tracked in memory to prevent concurrent games per user
 const activeGames = new Map();
 
+const COOLDOWN_MS = 30 * 1000;
+
 module.exports = {
-    cooldown: 30,
     data: new SlashCommandBuilder()
         .setName('scramble')
         .setDescription('Scramble a word and guess the correct word to earn coins.'),
@@ -103,6 +104,12 @@ module.exports = {
 
         if (activeGames.has(user.id)) {
             return interaction.editReply({ content: 'You already have a Scramble game running! Finish it first.', ephemeral: true });
+        }
+
+        const cd = await db.checkAndSetCooldown(user.id, 'scramble', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const s = Math.ceil(cd.remaining / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${s}s**.`, ephemeral: true });
         }
 
         const word = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];

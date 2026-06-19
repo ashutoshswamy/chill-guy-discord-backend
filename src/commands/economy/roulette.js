@@ -24,8 +24,9 @@ function colorEmoji(color) {
     return 'Green';
 }
 
+const COOLDOWN_MS = 5 * 1000;
+
 module.exports = {
-    cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('roulette')
         .setDescription('Spin the roulette wheel. Red/Black (2x), Green (14x), Number 0-36 (36x).')
@@ -56,6 +57,12 @@ module.exports = {
             }
             betType = 'number';
             betNumber = n;
+        }
+
+        const cd = await db.checkAndSetCooldown(user.id, 'roulette', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const s = Math.ceil(cd.remaining / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${s}s**.`, ephemeral: true });
         }
 
         try {

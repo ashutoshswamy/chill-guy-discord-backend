@@ -46,8 +46,9 @@ function buildContainer(user, bet, current, round, potentialWin, status = null, 
     return container;
 }
 
+const COOLDOWN_MS = 8 * 1000;
+
 module.exports = {
-    cooldown: 8,
     data: new SlashCommandBuilder()
         .setName('higherlower')
         .setDescription('Guess higher or lower. Keep going to multiply your winnings.')
@@ -60,6 +61,12 @@ module.exports = {
     async execute(interaction) {
         const { user } = interaction;
         const amount = interaction.options.getInteger('amount');
+
+        const cd = await db.checkAndSetCooldown(user.id, 'higherlower', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const s = Math.ceil(cd.remaining / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${s}s**.`, ephemeral: true });
+        }
 
         try {
             const profile = await db.getUser(user.id);

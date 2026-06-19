@@ -5,7 +5,6 @@ const {
     ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
 const db = require('../../utils/db');
-const { checkCooldown } = require('../../utils/cooldowns');
 const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
@@ -78,6 +77,8 @@ const CRIMES = {
     }
 };
 
+const COOLDOWN_MS = 300 * 1000;
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('crime')
@@ -85,6 +86,12 @@ module.exports = {
 
     async execute(interaction) {
         const { user } = interaction;
+
+        const cd = await db.checkAndSetCooldown(user.id, 'crime', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const m = Math.floor(cd.remaining / 60000), s = Math.floor((cd.remaining % 60000) / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${m}m ${s}s**.`, ephemeral: true });
+        }
 
         try {
             const container = new ContainerBuilder()
@@ -125,15 +132,6 @@ module.exports = {
 
                 const key = i.customId.replace('crime_op_', '');
                 const op = CRIMES[key];
-
-                const cd = checkCooldown(`crime_${key}`, user.id, op.cooldown);
-                if (cd.onCooldown) {
-                    const mins = Math.ceil(parseFloat(cd.remaining) / 60);
-                    await interaction.editReply({
-                        content: `You need to lay low after **${op.name}**. Try again in **${cd.remaining}s** (~${mins}m).`,
-                    }).catch(() => null);
-                    return;
-                }
 
                 collector.stop('selected');
 

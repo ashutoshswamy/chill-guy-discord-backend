@@ -49,22 +49,15 @@ async function buildCooldownsContainer(targetUser) {
     const weeklyRem = profile.weekly_claimed_at ? (new Date(profile.weekly_claimed_at).getTime() + 7 * 24 * 60 * 60 * 1000) - Date.now() : 0;
     const monthlyRem = profile.monthly_claimed_at ? (new Date(profile.monthly_claimed_at).getTime() + 30 * 24 * 60 * 60 * 1000) - Date.now() : 0;
 
-    // 3. Minigames (In-memory cooldowns)
-    const { cooldowns: memCooldowns } = require('../../utils/cooldowns');
-
-    function getMemRem(action) {
-        if (!memCooldowns.has(action)) return 0;
-        const expiry = memCooldowns.get(action).get(targetUser.id);
-        return expiry ? expiry - Date.now() : 0;
-    }
-
-    const minigames = [
+    // 3. All minigames backed by Supabase user_cooldowns
+    const dbMinigames = [
         { name: 'Beg', key: 'beg' },
         { name: 'Blackjack', key: 'blackjack' },
         { name: 'Slots', key: 'slots' },
         { name: 'Coinflip', key: 'coinflip' },
         { name: 'Cockfight', key: 'cockfight' },
         { name: 'Rob', key: 'rob' },
+        { name: 'Rob (victim shield)', key: 'rob_victim' },
         { name: 'Crash', key: 'crash' },
         { name: 'Roulette', key: 'roulette' },
         { name: 'RPS', key: 'rps' },
@@ -74,8 +67,17 @@ async function buildCooldownsContainer(targetUser) {
         { name: 'Scramble', key: 'scramble' },
         { name: 'Crime', key: 'crime' },
         { name: 'Bankrob', key: 'bankrob' },
+        { name: 'Bankrob (victim shield)', key: 'bankrob_victim' },
         { name: 'Higher Lower', key: 'higherlower' },
-        { name: 'Horse Race', key: 'horserace' }
+        { name: 'Horse Race', key: 'horserace' },
+        { name: 'Dice', key: 'dice' },
+        { name: 'Plinko', key: 'plinko' },
+        { name: 'Hack', key: 'hack' },
+        { name: 'Hangman', key: 'hangman' },
+        { name: 'Memory', key: 'memory' },
+        { name: 'Type Race', key: 'typerace' },
+        { name: 'Word Guess', key: 'wordguess' },
+        { name: 'Trivia', key: 'trivia' },
     ];
 
     const grindingText =
@@ -94,8 +96,8 @@ async function buildCooldownsContainer(targetUser) {
     const activeMinigames = [];
     const readyMinigames = [];
 
-    for (const game of minigames) {
-        const rem = getMemRem(game.key);
+    for (const game of dbMinigames) {
+        const rem = getDbRem(game.key);
         if (rem > 0) {
             activeMinigames.push(`**/${game.key}:** ${formatRemaining(rem)}`);
         } else {

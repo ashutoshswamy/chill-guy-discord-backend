@@ -100,14 +100,21 @@ function buildHackContainer(user, targetSeq, currentSeq, status, payout = 0, wal
     return container;
 }
 
+const COOLDOWN_MS = 600 * 1000;
+
 module.exports = {
-    cooldown: 600,
     data: new SlashCommandBuilder()
         .setName('hack')
         .setDescription('Breach a secure mainframe by matching the sequence. High payout, requires skill!'),
 
     async execute(interaction) {
         const { user } = interaction;
+
+        const cd = await db.checkAndSetCooldown(user.id, 'hack', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const m = Math.floor(cd.remaining / 60000), s = Math.floor((cd.remaining % 60000) / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${m}m ${s}s**.`, ephemeral: true });
+        }
 
         try {
             const targetSeq = getRandomSequence(4);

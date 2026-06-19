@@ -23,8 +23,9 @@ function getResult(player, bot) {
     return 'lose';
 }
 
+const COOLDOWN_MS = 5 * 1000;
+
 module.exports = {
-    cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('rps')
         .setDescription('Rock Paper Scissors against the bot. Win = 2x, tie = refund.')
@@ -37,6 +38,12 @@ module.exports = {
     async execute(interaction) {
         const { user } = interaction;
         const amount = interaction.options.getInteger('amount');
+
+        const cd = await db.checkAndSetCooldown(user.id, 'rps', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const s = Math.ceil(cd.remaining / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${s}s**.`, ephemeral: true });
+        }
 
         try {
             const profile = await db.getUser(user.id);

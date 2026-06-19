@@ -49,8 +49,9 @@ function renderTrack(positions) {
     }).join('\n');
 }
 
+const COOLDOWN_MS = 10 * 1000;
+
 module.exports = {
-    cooldown: 10,
     data: new SlashCommandBuilder()
         .setName('horserace')
         .setDescription('Bet on a horse race. Higher odds = bigger payout, lower win chance.')
@@ -73,6 +74,12 @@ module.exports = {
         const horseName = interaction.options.getString('horse');
         const horseIdx = HORSES.findIndex(h => h.name === horseName);
         const horse = HORSES[horseIdx];
+
+        const cd = await db.checkAndSetCooldown(user.id, 'horserace', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const s = Math.ceil(cd.remaining / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${s}s**.`, ephemeral: true });
+        }
 
         try {
             const profile = await db.getUser(user.id);

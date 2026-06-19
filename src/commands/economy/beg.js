@@ -21,14 +21,21 @@ const BEG_RESPONSES = [
 
 const JUNK_ITEMS = ['Old Boot', 'Junk Seaweed', 'Common Worm'];
 
+const COOLDOWN_MS = 45 * 1000;
+
 module.exports = {
-    cooldown: 45,
     data: new SlashCommandBuilder()
         .setName('beg')
         .setDescription('Beg for spare change. Small payouts, 45s cooldown.'),
 
     async execute(interaction) {
         const { user } = interaction;
+
+        const cd = await db.checkAndSetCooldown(user.id, 'beg', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const s = Math.ceil(cd.remaining / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${s}s**.`, ephemeral: true });
+        }
 
         try {
             const payout = Math.floor(Math.random() * 101) + 20;

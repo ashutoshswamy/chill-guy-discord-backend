@@ -115,8 +115,9 @@ function buildContainer(s1, s2, s3, statusText, user, amount, result, wallet, is
     };
 }
 
+const COOLDOWN_MS = 5 * 1000;
+
 module.exports = {
-    cooldown: 5,
     data: new SlashCommandBuilder()
         .setName('slots')
         .setDescription('Spin the slot machine. Match symbols to win big.')
@@ -129,6 +130,12 @@ module.exports = {
     async execute(interaction) {
         const { user } = interaction;
         const amount = interaction.options.getInteger('amount');
+
+        const cd = await db.checkAndSetCooldown(user.id, 'slots', COOLDOWN_MS);
+        if (cd.onCooldown) {
+            const s = Math.ceil(cd.remaining / 1000);
+            return interaction.editReply({ content: `On cooldown! Try again in **${s}s**.`, ephemeral: true });
+        }
 
         let lastState = {
             s1: 'Cherry', s2: 'Cherry', s3: 'Cherry',

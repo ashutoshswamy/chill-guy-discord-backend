@@ -49,6 +49,13 @@ async function buildCooldownsContainer(targetUser) {
     const weeklyRem = profile.weekly_claimed_at ? (new Date(profile.weekly_claimed_at).getTime() + 7 * 24 * 60 * 60 * 1000) - Date.now() : 0;
     const monthlyRem = profile.monthly_claimed_at ? (new Date(profile.monthly_claimed_at).getTime() + 30 * 24 * 60 * 60 * 1000) - Date.now() : 0;
 
+    const getDbRem = (key) => {
+        const row = dbCooldowns.find(cd => cd.action === key);
+        if (!row) return 0;
+        const rem = new Date(row.expires_at).getTime() - Date.now();
+        return rem > 0 ? rem : 0;
+    };
+
     // 3. All minigames backed by Supabase user_cooldowns
     const dbMinigames = [
         { name: 'Beg', key: 'beg' },

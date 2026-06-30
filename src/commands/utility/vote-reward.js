@@ -25,14 +25,21 @@ function formatRemaining(ms) {
 
 async function checkVoted(userId) {
     const token = process.env.TOPGG_TOKEN;
-    if (!token) return null; // can't verify
+    if (!token) {
+        console.warn('[TOPGG] TOPGG_TOKEN not set.');
+        return null;
+    }
 
     const res = await fetch(
         `https://top.gg/api/bots/${BOT_ID}/check?userId=${userId}`,
         { headers: { Authorization: token } }
     );
+
+    const text = await res.text();
+    console.log(`[TOPGG] status=${res.status} body=${text}`);
+
     if (!res.ok) return null;
-    const json = await res.json();
+    const json = JSON.parse(text);
     return json.voted === 1;
 }
 

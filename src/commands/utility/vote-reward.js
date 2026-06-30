@@ -9,6 +9,7 @@ const { XP_REWARDS } = require('../../utils/xp');
 const { getEmoji } = require('../../utils/emojis');
 
 const coin = getEmoji('coin');
+const xp = getEmoji('xp');
 const BOT_ID = '1516531192353263738';
 const VOTE_URL = `https://top.gg/bot/${BOT_ID}/vote`;
 const COOLDOWN_MS = 12 * 60 * 60 * 1000;
@@ -46,7 +47,7 @@ module.exports = {
         try {
             const voted = await checkVoted(user.id);
 
-            if (voted === false) {
+            if (voted !== true) {
                 const row = new ActionRowBuilder().addComponents(
                     new ButtonBuilder()
                         .setLabel('Vote on top.gg')
@@ -60,7 +61,6 @@ module.exports = {
                 });
             }
 
-            // voted === null means no token configured — skip verification, use cooldown as gate
             const cooldown = await db.checkAndSetCooldown(user.id, 'vote_reward', COOLDOWN_MS);
 
             if (cooldown.onCooldown) {
@@ -79,7 +79,7 @@ module.exports = {
                     new SectionBuilder()
                         .addTextDisplayComponents(
                             new TextDisplayBuilder().setContent(
-                                `## Vote Reward Claimed!\n${coin} **${payout.toLocaleString()}** coins + ✨ **${VOTE_XP} XP** added!`
+                                `## Vote Reward Claimed!\n${coin} **${payout.toLocaleString()}** coins + ${xp} **${VOTE_XP} XP** added!`
                             )
                         )
                         .setThumbnailAccessory(new ThumbnailBuilder().setURL(user.displayAvatarURL({ forceStatic: true })))

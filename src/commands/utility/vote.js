@@ -3,7 +3,10 @@ const {
     ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize,
     ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags
 } = require('discord.js');
+const { getEmoji } = require('../../utils/emojis');
 
+const coin = getEmoji('coin');
+const xp = getEmoji('xp');
 const BOT_ID = '1516531192353263738';
 const VOTE_URL = `https://top.gg/bot/${BOT_ID}/vote`;
 
@@ -19,8 +22,8 @@ module.exports = {
                     `## Vote for Chill Guy!\n` +
                     `Support the bot by voting on **top.gg** every **12 hours**.\n\n` +
                     `**Rewards per vote:**\n` +
-                    `> 🪙 **1,500 – 2,500** coins\n` +
-                    `> ✨ **75** XP\n\n` +
+                    `> ${coin} **1,500 – 2,500** coins\n` +
+                    `> ${xp} **75** XP\n\n` +
                     `-# After voting, use \`/vote-reward\` to claim your reward!`
                 )
             )

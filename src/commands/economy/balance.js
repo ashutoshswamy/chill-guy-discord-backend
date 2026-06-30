@@ -92,6 +92,11 @@ module.exports = {
 
             if (!isSelf) return;
 
+            interaction.followUp({
+                content: `${coin} **Want more coins?** Vote for Chill Guy on top.gg with \`/vote\`, then claim **1,500–2,500 coins + 75 XP** every 12 hours using \`/vote-reward\`!`,
+                ephemeral: true
+            }).catch(() => null);
+
             const collector = response.createMessageComponentCollector({
                 filter: i => i.user.id === user.id,
                 time: 60_000

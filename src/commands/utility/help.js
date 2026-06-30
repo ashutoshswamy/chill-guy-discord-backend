@@ -147,6 +147,8 @@ const CATEGORIES = {
             { name: '/ping', desc: 'Check bot latency.', details: 'Cooldown: None' },
             { name: '/cooldowns [user]', desc: 'Check active action and reward cooldowns.', details: 'Cooldown: None · Option: user (optional)' },
             { name: '/help', desc: 'Browse all bot commands by category.', details: 'Cooldown: None · Dropdown & page pagination' },
+            { name: '/vote', desc: 'Get the top.gg voting link for Chill Guy.', details: 'Cooldown: None · Vote every 12 hours' },
+            { name: '/vote-reward', desc: 'Claim your reward after voting on top.gg.', details: 'Cooldown: 12h · Reward: 1,500–2,500 coins + 75 XP' },
             { name: '/resetprofile', desc: 'Wipe your entire profile and start fresh. This cannot be undone.', details: 'Cooldown: None · Irreversible' }
         ]
     },
